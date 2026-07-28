@@ -1,0 +1,63 @@
+// Oryx Prisma schema — mobility marketplace persistence
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Ride {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  origin       String
+  destination  String
+  distanceKm   Float
+  durationMin  Int
+  initialPrice Float
+  finalPrice   Float
+  savings      Float
+  providerName String
+  driverName   String
+  agentStrategy String
+  status       String   @default("booked")
+}
+
+model Provider {
+  id        String  @id
+  name      String
+  category  String
+  rating    Float
+  baseFare  Float
+  perKm     Float
+  perMin    Float
+  wins      Int     @default(0)
+  totalSavingsDelivered Float @default(0)
+}
+
+model LeaderboardEntry {
+  id        String  @id @default(cuid())
+  name      String
+  avatar    String
+  saved     Float
+  rides     Int
+  streak    Int
+  rank      Int
+  neighborhood String?
+  change    Int     @default(0)
+  isYou     Boolean @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+model SavingsStat {
+  id            String  @id @default("singleton")
+  totalSaved    Float   @default(0)
+  ytdSaved      Float   @default(0)
+  ridesCount    Int     @default(0)
+  co2Saved      Float   @default(0)
+  hoursSaved    Float   @default(0)
+  streak        Int     @default(0)
+  belowAvgPct   Int     @default(0)
+}
