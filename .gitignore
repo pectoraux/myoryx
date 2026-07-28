@@ -1,24 +1,16 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
-node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
+node_modules/
+.pnp
+.pnp.js
 
 # next.js
-/.next/
-/out/
+.next/
+out/
+build/
+dist/
 
 # production
-/build
+*.tsbuildinfo
 
 # misc
 .DS_Store
@@ -28,27 +20,31 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+bun-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files (secrets — set on Vercel dashboard/API instead)
+.env
+.env*.local
+
+# logs
+dev.log
+server.log
+*.log
 
 # vercel
 .vercel
 
+# prisma
+prisma/migrations/dev.db*
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-local-*
-.claude
-.z-ai-config
-*.log
-dev.log
-dev.out.log
-test
-prompt
+# local db
+db/*.db
+db/*.db-journal
 
-server.log
-# Skills directory
-/skills/
+# mini-service logs
+mini-services/*/service.log
+
+# sandbox
+tests/
+download/
+skills/

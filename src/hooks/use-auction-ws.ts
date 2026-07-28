@@ -78,6 +78,11 @@ export function useAuctionWs(): UseAuctionWs {
   }, []);
 
   useEffect(() => {
+    // On Vercel (or when explicitly disabled), skip the WebSocket mini-service
+    // and rely on the local auction simulation — identical UX.
+    const useWs = process.env.NEXT_PUBLIC_AUCTION_WS !== "false";
+    if (!useWs) return;
+
     const socket = io("/?XTransformPort=3003", {
       path: "/",
       transports: ["websocket", "polling"],
@@ -163,7 +168,10 @@ export function useAuctionWs(): UseAuctionWs {
       // Emit to WS (works through gateway)
       socketRef.current?.emit("auction:start", { startPrice, intensity });
 
-      // Fallback: if WS doesn't deliver within 2.5s, run local simulation
+      // Fallback: if WS unavailable (Vercel) or doesn't deliver, run local sim.
+      // Immediate when WS is disabled; 2.5s grace when WS is attempting.
+      const wsDisabled = process.env.NEXT_PUBLIC_AUCTION_WS === "false";
+      const fallbackDelay = wsDisabled ? 0 : 2500;
       const fallbackStart = setTimeout(() => {
         if (wsReceivedRef.current) return; // WS is working
         let cd = 20;

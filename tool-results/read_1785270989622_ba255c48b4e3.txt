@@ -1,0 +1,977 @@
+     1→import type {
+     2→  Provider,
+     3→  AgentProfile,
+     4→  Destination,
+     5→  SavingsStats,
+     6→  LeaderboardEntry,
+     7→  MarketTicker,
+     8→  IntelligenceConnector,
+     9→  KnowledgeGraphNode,
+    10→  TeamAgent,
+    11→  CalendarSuggestion,
+    12→  VehicleOption,
+    13→  DriverProfile,
+    14→  ContinuousOptEvent,
+    15→  CommunityIntel,
+    16→  ProfileMeta,
+    17→  NPDOffer,
+    18→  ReturnRide,
+    19→  PersonalDriver,
+    20→  CommuteGroup,
+    21→  AI2AITransaction,
+    22→  MerchantOrder,
+    23→  FleetOperator,
+    24→  UserType,
+    25→} from "./types";
+    26→
+    27→// Accra city center — matches user timezone Africa/Accra
+    28→export const CITY_CENTER = { lat: 5.6037, lng: -0.187 };
+    29→
+    30→export const PROVIDERS: Provider[] = [
+    31→  {
+    32→    id: "uber",
+    33→    name: "Uber",
+    34→    category: "ride-hail",
+    35→    color: "#1a1a1a",
+    36→    emoji: "U",
+    37→    baseFare: 6,
+    38→    perKm: 1.9,
+    39→    perMin: 0.35,
+    40→    rating: 4.7,
+    41→    reliability: 0.92,
+    42→    features: ["electric", "luggage"],
+    43→  },
+    44→  {
+    45→    id: "bolt",
+    46→    name: "Bolt",
+    47→    category: "ride-hail",
+    48→    color: "#2bc553",
+    49→    emoji: "B",
+    50→    baseFare: 5,
+    51→    perKm: 1.7,
+    52→    perMin: 0.3,
+    53→    rating: 4.6,
+    54→    reliability: 0.88,
+    55→    features: ["luggage"],
+    56→  },
+    57→  {
+    58→    id: "yango",
+    59→    name: "Yango",
+    60→    category: "ride-hail",
+    61→    color: "#ff4d4d",
+    62→    emoji: "Y",
+    63→    baseFare: 4.5,
+    64→    perKm: 1.6,
+    65→    perMin: 0.28,
+    66→    rating: 4.5,
+    67→    reliability: 0.85,
+    68→    features: [],
+    69→  },
+    70→  {
+    71→    id: "indrive",
+    72→    name: "inDrive",
+    73→    category: "ride-hail",
+    74→    color: "#c1f11d",
+    75→    emoji: "i",
+    76→    baseFare: 4,
+    77→    perKm: 1.5,
+    78→    perMin: 0.25,
+    79→    rating: 4.4,
+    80→    reliability: 0.8,
+    81→    features: [],
+    82→  },
+    83→  {
+    84→    id: "taxi",
+    85→    name: "City Taxi",
+    86→    category: "taxi",
+    87→    color: "#f5a623",
+    88→    emoji: "T",
+    89→    baseFare: 5.5,
+    90→    perKm: 1.8,
+    91→    perMin: 0.3,
+    92→    rating: 4.3,
+    93→    reliability: 0.78,
+    94→    features: ["luggage", "pet-friendly"],
+    95→  },
+    96→  {
+    97→    id: "moto",
+    98→    name: "Okada Moto",
+    99→    category: "moto",
+   100→    color: "#ff6b35",
+   101→    emoji: "M",
+   102→    baseFare: 2,
+   103→    perKm: 0.8,
+   104→    perMin: 0.1,
+   105→    rating: 4.2,
+   106→    reliability: 0.9,
+   107→    features: ["fast"],
+   108→  },
+   109→  {
+   110→    id: "shuttle",
+   111→    name: "Shared Shuttle",
+   112→    category: "shuttle",
+   113→    color: "#7b61ff",
+   114→    emoji: "S",
+   115→    baseFare: 1.5,
+   116→    perKm: 0.5,
+   117→    perMin: 0.08,
+   118→    rating: 4.1,
+   119→    reliability: 0.82,
+   120→    features: ["shared", "electric"],
+   121→  },
+   122→  {
+   123→    id: "luxury",
+   124→    name: "Oryx Black",
+   125→    category: "luxury",
+   126→    color: "#d4af37",
+   127→    emoji: "★",
+   128→    baseFare: 12,
+   129→    perKm: 3.2,
+   130→    perMin: 0.5,
+   131→    rating: 4.9,
+   132→    reliability: 0.95,
+   133→    features: ["luxury", "electric", "luggage", "child-seat"],
+   134→  },
+   135→];
+   136→
+   137→export const AGENTS: AgentProfile[] = [
+   138→  {
+   139→    id: "balanced",
+   140→    name: "Balanced",
+   141→    tagline: "Smart savings, reasonable wait",
+   142→    description:
+   143→      "Negotiates a fair price without long detours. Books when savings clear 18%.",
+   144→    maxWait: 6,
+   145→    walkTolerance: 150,
+   146→    negotiateIntensity: 0.5,
+   147→    icon: "Scale",
+   148→    color: "#72b1a6",
+   149→  },
+   150→  {
+   151→    id: "aggressive-saver",
+   152→    name: "Aggressive Saver",
+   153→    tagline: "Waits, negotiates hard",
+   154→    description:
+   155→      "Hunts the lowest fare. Will wait up to 9 minutes and counter every bid.",
+   156→    maxWait: 9,
+   157→    walkTolerance: 250,
+   158→    negotiateIntensity: 0.78,
+   159→    icon: "Crosshair",
+   160→    color: "#f5a623",
+   161→  },
+   162→  {
+   163→    id: "maximum-saver",
+   164→    name: "Maximum Saver",
+   165→    tagline: "Walks farther, allows transfers",
+   166→    description:
+   167→      "Multi-hop master. Combines walk + shuttle + ride to crush the price floor.",
+   168→    maxWait: 14,
+   169→    walkTolerance: 500,
+   170→    negotiateIntensity: 0.92,
+   171→    icon: "PiggyBank",
+   172→    color: "#4ade80",
+   173→  },
+   174→  {
+   175→    id: "rush",
+   176→    name: "Rush Mode",
+   177→    tagline: "No bargaining, fastest pickup",
+   178→    description: "Skip the auction. Locks the nearest vehicle the instant you tap.",
+   179→    maxWait: 0,
+   180→    walkTolerance: 80,
+   181→    negotiateIntensity: 0.1,
+   182→    icon: "Zap",
+   183→    color: "#ef4444",
+   184→  },
+   185→  {
+   186→    id: "luxury",
+   187→    name: "Luxury Agent",
+   188→    tagline: "Only premium rides",
+   189→    description: "Filters to Oryx Black and top-rated executive fleets only.",
+   190→    maxWait: 4,
+   191→    walkTolerance: 100,
+   192→    negotiateIntensity: 0.3,
+   193→    icon: "Crown",
+   194→    color: "#d4af37",
+   195→  },
+   196→  {
+   197→    id: "business",
+   198→    name: "Business Agent",
+   199→    tagline: "Company policy compliant",
+   200→    description: "Enforces corporate fare caps and preferred providers automatically.",
+   201→    maxWait: 5,
+   202→    walkTolerance: 120,
+   203→    negotiateIntensity: 0.45,
+   204→    icon: "Briefcase",
+   205→    color: "#a78bfa",
+   206→  },
+   207→];
+   208→
+   209→export const DESTINATIONS: Destination[] = [
+   210→  {
+   211→    id: "airport",
+   212→    name: "Kotoka Int'l Airport",
+   213→    address: "Airport Rd, Accra",
+   214→    lat: 5.6051,
+   215→    lng: -0.1668,
+   216→    category: "suggested",
+   217→    emoji: "✈️",
+   218→  },
+   219→  {
+   220→    id: "mall",
+   221→    name: "Accra Mall",
+   222→    address: "Spintex Rd, Accra",
+   223→    lat: 5.6262,
+   224→    lng: -0.1769,
+   225→    category: "suggested",
+   226→    emoji: "🛍️",
+   227→  },
+   228→  {
+   229→    id: "labadi",
+   230→    name: "Labadi Beach Hotel",
+   231→    address: "Labadi Rd, Accra",
+   232→    lat: 5.5731,
+   233→    lng: -0.1824,
+   234→    category: "saved",
+   235→    emoji: "🏖️",
+   236→  },
+   237→  {
+   238→    id: "osu",
+   239→    name: "Osu Night Market",
+   240→    address: "Oxford St, Osu, Accra",
+   241→    lat: 5.5597,
+   242→    lng: -0.1757,
+   243→    category: "recent",
+   244→    emoji: "🍜",
+   245→  },
+   246→  {
+   247→    id: "circle",
+   248→    name: "Kwame Nkrumah Circle",
+   249→    address: "Ring Road Central, Accra",
+   250→    lat: 5.5731,
+   251→    lng: -0.2053,
+   252→    category: "recent",
+   253→    emoji: "🔄",
+   254→  },
+   255→  {
+   256→    id: "stadium",
+   257→    name: "Accra Sports Stadium",
+   258→    address: "Ring Rd E, Accra",
+   259→    lat: 5.5753,
+   260→    lng: -0.1967,
+   261→    category: "event",
+   262→    emoji: "🏟️",
+   263→  },
+   264→  {
+   265→    id: "university",
+   266→    name: "University of Ghana",
+   267→    address: "Legon, Accra",
+   268→    lat: 5.6522,
+   269→    lng: -0.1862,
+   270→    category: "saved",
+   271→    emoji: "🎓",
+   272→  },
+   273→  {
+   274→    id: "office",
+   275→    name: "The Octagon",
+   276→    address: "Independence Ave, Accra",
+   277→    lat: 5.5636,
+   278→    lng: -0.2026,
+   279→    category: "saved",
+   280→    emoji: "🏢",
+   281→  },
+   282→];
+   283→
+   284→export const SAVINGS_STATS: SavingsStats = {
+   285→  totalSaved: 618,
+   286→  ytdSaved: 412,
+   287→  ridesCount: 87,
+   288→  co2Saved: 34.6,
+   289→  hoursSaved: 11.4,
+   290→  streak: 6,
+   291→  belowAvgPct: 78,
+   292→  rank: 142,
+   293→  neighborhoodRank: 3,
+   294→};
+   295→
+   296→export const LEADERBOARD: LeaderboardEntry[] = [
+   297→  { rank: 1, name: "Kwame A.", avatar: "KA", saved: 2841, rides: 312, streak: 47, change: 0 },
+   298→  { rank: 2, name: "Ama O.", avatar: "AO", saved: 2614, rides: 288, streak: 33, change: 1 },
+   299→  { rank: 3, name: "Yusuf I.", avatar: "YI", saved: 2403, rides: 271, streak: 41, change: -1 },
+   300→  { rank: 4, name: "Esi B.", avatar: "EB", saved: 2105, rides: 245, streak: 22, change: 2 },
+   301→  { rank: 5, name: "Daniel M.", avatar: "DM", saved: 1988, rides: 233, streak: 19, change: 0 },
+   302→  { rank: 6, name: "Fatima A.", avatar: "FA", saved: 1876, rides: 221, streak: 28, change: 3 },
+   303→  { rank: 7, name: "Kojo P.", avatar: "KP", saved: 1742, rides: 209, streak: 15, change: -2 },
+   304→  { rank: 8, name: "Akosua T.", avatar: "AT", saved: 1620, rides: 198, streak: 11, change: 1 },
+   305→];
+   306→
+   307→export const MARKET_TICKERS: MarketTicker[] = [
+   308→  { id: "1", text: "Labadi → Airport auction cleared at $11.40", type: "auction" },
+   309→  { id: "2", text: "Osu pool matched · 4 riders · $6.20 each", type: "pool" },
+   310→  { id: "3", text: "Surge clearing on Spintex in 7 min · −34%", type: "alert" },
+   311→  { id: "4", text: "Ama saved $4.10 on her last ride", type: "saving" },
+   312→  { id: "5", text: "Stadium demand pooling: 120 riders batching", type: "pool" },
+   313→  { id: "6", text: "3 new independent drivers joined East Legon", type: "saving" },
+   314→  { id: "7", text: "Rain expected 18:40 · book in 12 min to save 31%", type: "alert" },
+   315→  { id: "8", text: "Oryx+ subscribers averaging 23% below city median", type: "saving" },
+   316→];
+   317→
+   318→export const DRIVER_NAMES = [
+   319→  "Kofi Mensah",
+   320→  "Yaw Boateng",
+   321→  "Ibrahim Suleiman",
+   322→  "Grace Adjei",
+   323→  "Samuel Owusu",
+   324→  "Amina Hassan",
+   325→  "Michael Tetteh",
+   326→  "Rashid Mohammed",
+   327→  "Comfort Asante",
+   328→  "Emmanuel Quaye",
+   329→  "Aisha Bello",
+   330→  "Daniel Adjei",
+   331→];
+   332→
+   333→export const VEHICLES = [
+   334→  "Toyota Corolla",
+   335→  "Hyundai Elantra",
+   336→  "Kia Picanto",
+   337→  "Honda Civic",
+   338→  "Toyota Vitz",
+   339→  "Suzuki Swift",
+   340→  "Nissan Almera",
+   341→  "Hyundai Accent",
+   342→];
+   343→
+   344→// Generate vehicle markers around a center point
+   345→export function generateVehicles(
+   346→  center: { lat: number; lng: number },
+   347→  count = 14
+   348→) {
+   349→  const vehicles = [];
+   350→  for (let i = 0; i < count; i++) {
+   351→    const provider = PROVIDERS[Math.floor(Math.random() * 5)];
+   352→    const angle = Math.random() * Math.PI * 2;
+   353→    const radius = 0.004 + Math.random() * 0.02;
+   354→    vehicles.push({
+   355→      id: `v-${i}`,
+   356→      providerId: provider.id,
+   357→      lat: center.lat + Math.sin(angle) * radius,
+   358→      lng: center.lng + Math.cos(angle) * radius,
+   359→      heading: Math.floor(Math.random() * 360),
+   360→      eta: Math.floor(1 + Math.random() * 9),
+   361→    });
+   362→  }
+   363→  return vehicles;
+   364→}
+   365→
+   366→// Compute a fare quote for a provider given distance/duration
+   367→export function computeFare(
+   368→  provider: Provider,
+   369→  distanceKm: number,
+   370→  durationMin: number,
+   371→  surge = 1
+   372→) {
+   373→  const price =
+   374→    (provider.baseFare + provider.perKm * distanceKm + provider.perMin * durationMin) *
+   375→    surge;
+   376→  return Math.round(price * 100) / 100;
+   377→}
+   378→
+   379→// Haversine distance in km
+   380→export function haversine(
+   381→  a: { lat: number; lng: number },
+   382→  b: { lat: number; lng: number }
+   383→) {
+   384→  const R = 6371;
+   385→  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+   386→  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+   387→  const lat1 = (a.lat * Math.PI) / 180;
+   388→  const lat2 = (b.lat * Math.PI) / 180;
+   389→  const h =
+   390→    Math.sin(dLat / 2) ** 2 +
+   391→    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+   392→  return 2 * R * Math.asin(Math.sqrt(h));
+   393→}
+   394→
+   395→// ===========================================================================
+   396→// AI Mobility Intelligence Network — data
+   397→// ===========================================================================
+   398→
+   399→export const CONNECTORS = [
+   400→  {
+   401→    id: "gmaps",
+   402→    name: "Google Maps",
+   403→    category: "mapping" as const,
+   404→    emoji: "🗺️",
+   405→    status: "live" as const,
+   406→    signals: ["routing", "live traffic", "incidents", "ETA"],
+   407→    latencyMs: 120,
+   408→    color: "#4ade80",
+   409→  },
+   410→  {
+   411→    id: "osm",
+   412→    name: "OpenStreetMap",
+   413→    category: "mapping" as const,
+   414→    emoji: "🛣️",
+   415→    status: "live" as const,
+   416→    signals: ["road network", "closures", "speeds"],
+   417→    latencyMs: 90,
+   418→    color: "#72b1a6",
+   419→  },
+   420→  {
+   421→    id: "uber",
+   422→    name: "Uber API",
+   423→    category: "ride-hail" as const,
+   424→    emoji: "U",
+   425→    status: "live" as const,
+   426→    signals: ["pricing", "ETA", "surge", "availability"],
+   427→    latencyMs: 340,
+   428→    color: "#1a1a1a",
+   429→  },
+   430→  {
+   431→    id: "bolt",
+   432→    name: "Bolt API",
+   433→    category: "ride-hail" as const,
+   434→    emoji: "B",
+   435→    status: "live" as const,
+   436→    signals: ["pricing", "ETA", "fleet"],
+   437→    latencyMs: 280,
+   438→    color: "#2bc553",
+   439→  },
+   440→  {
+   441→    id: "yango",
+   442→    name: "Yango API",
+   443→    category: "ride-hail" as const,
+   444→    emoji: "Y",
+   445→    status: "syncing" as const,
+   446→    signals: ["pricing", "ETA"],
+   447→    latencyMs: 410,
+   448→    color: "#ff4d4d",
+   449→  },
+   450→  {
+   451→    id: "indrive",
+   452→    name: "inDrive",
+   453→    category: "ride-hail" as const,
+   454→    emoji: "i",
+   455→    status: "live" as const,
+   456→    signals: ["driver bids", "negotiated fares"],
+   457→    latencyMs: 220,
+   458→    color: "#c1f11d",
+   459→  },
+   460→  {
+   461→    id: "weather",
+   462→    name: "Weather Stream",
+   463→    category: "weather" as const,
+   464→    emoji: "🌧️",
+   465→    status: "live" as const,
+   466→    signals: ["rain", "wind", "flood risk", "heat index"],
+   467→    latencyMs: 800,
+   468→    color: "#22d3ee",
+   469→  },
+   470→  {
+   471→    id: "events",
+   472→    name: "Event Feed",
+   473→    category: "events" as const,
+   474→    emoji: "🎉",
+   475→    status: "live" as const,
+   476→    signals: ["concerts", "matches", "conferences", "rallies"],
+   477→    latencyMs: 1500,
+   478→    color: "#f5a623",
+   479→  },
+   480→  {
+   481→    id: "calendar",
+   482→    name: "Calendar Sync",
+   483→    category: "calendar" as const,
+   484→    emoji: "📅",
+   485→    status: "connected" as const,
+   486→    signals: ["meetings", "recurring trips", "reminders"],
+   487→    latencyMs: 60,
+   488→    color: "#a78bfa",
+   489→  },
+   490→  {
+   491→    id: "transit",
+   492→    name: "Public Transit",
+   493→    category: "transit" as const,
+   494→    emoji: "🚌",
+   495→    status: "live" as const,
+   496→    signals: ["bus schedules", "metro", "shuttles", "ferries"],
+   497→    latencyMs: 600,
+   498→    color: "#fb923c",
+   499→  },
+   500→  {
+   501→    id: "driver-intel",
+   502→    name: "Driver Network",
+   503→    category: "driver" as const,
+   504→    emoji: "🚗",
+   505→    status: "live" as const,
+   506→    signals: ["hours", "zones", "earnings", "capacity"],
+   507→    latencyMs: 180,
+   508→    color: "#facc15",
+   509→  },
+   510→  {
+   511→    id: "rider-intel",
+   512→    name: "Rider Preferences",
+   513→    category: "rider" as const,
+   514→    emoji: "🧍",
+   515→    status: "connected" as const,
+   516→    signals: ["walking tolerance", "budget", "history", "favorites"],
+   517→    latencyMs: 40,
+   518→    color: "#f472b6",
+   519→  },
+   520→];
+   521→
+   522→export const KNOWLEDGE_GRAPH: KnowledgeGraphNode[] = [
+   523→  { id: "riders", label: "Riders", type: "rider", count: 18420, color: "#72b1a6" },
+   524→  { id: "drivers", label: "Drivers", type: "driver", count: 3120, color: "#facc15" },
+   525→  { id: "vehicles", label: "Vehicles", type: "vehicle", count: 3480, color: "#a78bfa" },
+   526→  { id: "roads", label: "Road segments", type: "road", count: 9420, color: "#4ade80" },
+   527→  { id: "neighborhoods", label: "Neighborhoods", type: "neighborhood", count: 64, color: "#22d3ee" },
+   528→  { id: "events", label: "Live events", type: "event", count: 12, color: "#f5a623" },
+   529→  { id: "weather", label: "Weather cells", type: "weather", count: 8, color: "#60a5fa" },
+   530→  { id: "prices", label: "Price points", type: "price", count: 28640, color: "#fb7185" },
+   531→];
+   532→
+   533→export const TEAM_AGENTS: TeamAgent[] = [
+   534→  {
+   535→    id: "savings",
+   536→    name: "Savings Agent",
+   537→    role: "Reduces cost",
+   538→    emoji: "💰",
+   539→    color: "#4ade80",
+   540→    status: "active",
+   541→    activity: "Negotiating 3 concurrent auctions · avg −24%",
+   542→    metrics: [
+   543→      { label: "Negotiated", value: "$184/wk" },
+   544→      { label: "Win rate", value: "91%" },
+   545→    ],
+   546→    contribution: 38,
+   547→  },
+   548→  {
+   549→    id: "pooling",
+   550→    name: "Pooling Agent",
+   551→    role: "Finds carpools",
+   552→    emoji: "🧑‍🤝‍🧑",
+   553→    color: "#a78bfa",
+   554→    status: "thinking",
+   555→    activity: "Scanning 42 nearby riders heading your direction",
+   556→    metrics: [
+   557→      { label: "Pools formed", value: "18 today" },
+   558→      { label: "Avg split", value: "−47%" },
+   559→    ],
+   560→    contribution: 22,
+   561→  },
+   562→  {
+   563→    id: "calendar",
+   564→    name: "Calendar Agent",
+   565→    role: "Optimizes timing",
+   566→    emoji: "📅",
+   567→    color: "#f472b6",
+   568→    status: "active",
+   569→    activity: "Found 2 schedule shifts saving GH₵41 this week",
+   570→    metrics: [
+   571→      { label: "Shifts found", value: "6/mo" },
+   572→      { label: "Avg save", value: "GH₵23" },
+   573→    ],
+   574→    contribution: 14,
+   575→  },
+   576→  {
+   577→    id: "safety",
+   578→    name: "Safety Agent",
+   579→    role: "Guards wellbeing",
+   580→    emoji: "🛡️",
+   581→    color: "#60a5fa",
+   582→    status: "idle",
+   583→    activity: "Monitoring route conditions · all clear",
+   584→    metrics: [
+   585→      { label: "Risk score", value: "Low" },
+   586→      { label: "Routes vetted", value: "312" },
+   587→    ],
+   588→    contribution: 6,
+   589→  },
+   590→  {
+   591→    id: "time",
+   592→    name: "Time Agent",
+   593→    role: "Optimizes arrival",
+   594→    emoji: "⏱️",
+   595→    color: "#22d3ee",
+   596→    status: "active",
+   597→    activity: "Re-routing around Spintex congestion · −6 min",
+   598→    metrics: [
+   599→      { label: "Time saved", value: "11.4h" },
+   600→      { label: "Re-routes", value: "4 today" },
+   601→    ],
+   602→    contribution: 10,
+   603→  },
+   604→  {
+   605→    id: "market",
+   606→    name: "Market Agent",
+   607→    role: "Watches every marketplace",
+   608→    emoji: "📊",
+   609→    color: "#f5a623",
+   610→    status: "active",
+   611→    activity: "Surge clearing on 3 corridors in <10 min",
+   612→    metrics: [
+   613→      { label: "Anomalies", value: "2 found" },
+   614→      { label: "Promos", value: "5 active" },
+   615→    ],
+   616→    contribution: 8,
+   617→  },
+   618→  {
+   619→    id: "learning",
+   620→    name: "Learning Agent",
+   621→    role: "Improves the team",
+   622→    emoji: "🧠",
+   623→    color: "#fb7185",
+   624→    status: "thinking",
+   625→    activity: "Training on 2,840 trips · model v312 live",
+   626→    metrics: [
+   627→      { label: "Accuracy", value: "94.2%" },
+   628→      { label: "Model", value: "v312" },
+   629→    ],
+   630→    contribution: 2,
+   631→  },
+   632→];
+   633→
+   634→export const CALENDAR_SUGGESTIONS: CalendarSuggestion[] = [
+   635→  {
+   636→    id: "c1",
+   637→    event: "Team standup",
+   638→    originalTime: "3:00 PM",
+   639→    suggestedTime: "4:00 PM",
+   640→    originalCost: 52,
+   641→    suggestedCost: 29,
+   642→    saving: 23,
+   643→    reason: "Surge clears after 3:45 PM. Off-peak window opens.",
+   644→    confidence: 88,
+   645→  },
+   646→  {
+   647→    id: "c2",
+   648→    event: "Dentist · Osu",
+   649→    originalTime: "5:30 PM",
+   650→    suggestedTime: "5:10 PM",
+   651→    originalCost: 38,
+   652→    suggestedCost: 20,
+   653→    saving: 18,
+   654→    reason: "Leave 20 min earlier to avoid rush-hour surge.",
+   655→    confidence: 76,
+   656→  },
+   657→  {
+   658→    id: "c3",
+   659→    event: "Airport pickup",
+   660→    originalTime: "Tomorrow 8:00 AM",
+   661→    suggestedTime: "Tomorrow 7:40 AM",
+   662→    originalCost: 74,
+   663→    suggestedCost: 58,
+   664→    saving: 16,
+   665→    reason: "Pre-book 2 days ahead — drivers fill schedules cheaper.",
+   666→    confidence: 92,
+   667→  },
+   668→];
+   669→
+   670→export const VEHICLE_OPTIONS: VehicleOption[] = [
+   671→  {
+   672→    id: "moto",
+   673→    name: "Motorcycle",
+   674→    emoji: "🏍️",
+   675→    capacity: 1,
+   676→    basePrice: 3,
+   677→    bestFor: "Beat traffic, solo",
+   678→    eta: 2,
+   679→    available: 48,
+   680→    co2: "low",
+   681→  },
+   682→  {
+   683→    id: "scooter",
+   684→    name: "E-Scooter",
+   685→    emoji: "🛴",
+   686→    capacity: 1,
+   687→    basePrice: 2,
+   688→    bestFor: "Last-mile, short hops",
+   689→    eta: 3,
+   690→    available: 22,
+   691→    co2: "low",
+   692→  },
+   693→  {
+   694→    id: "tuktuk",
+   695→    name: "Tuk-tuk",
+   696→    emoji: "🛺",
+   697→    capacity: 3,
+   698→    basePrice: 4,
+   699→    bestFor: "Short urban trips",
+   700→    eta: 4,
+   701→    available: 15,
+   702→    co2: "low",
+   703→  },
+   704→  {
+   705→    id: "sedan",
+   706→    name: "Sedan",
+   707→    emoji: "🚗",
+   708→    capacity: 4,
+   709→    basePrice: 8,
+   710→    bestFor: "Everyday comfort",
+   711→    eta: 3,
+   712→    available: 124,
+   713→    co2: "medium",
+   714→    recommended: true,
+   715→  },
+   716→  {
+   717→    id: "suv",
+   718→    name: "SUV",
+   719→    emoji: "🚙",
+   720→    capacity: 6,
+   721→    basePrice: 14,
+   722→    bestFor: "Groups, luggage",
+   723→    eta: 5,
+   724→    available: 38,
+   725→    co2: "high",
+   726→  },
+   727→  {
+   728→    id: "van",
+   729→    name: "Van",
+   730→    emoji: "🚐",
+   731→    capacity: 8,
+   732→    basePrice: 18,
+   733→    bestFor: "Family, team travel",
+   734→    eta: 6,
+   735→    available: 12,
+   736→    co2: "high",
+   737→  },
+   738→  {
+   739→    id: "minibus",
+   740→    name: "Minibus",
+   741→    emoji: "🚌",
+   742→    capacity: 15,
+   743→    basePrice: 3,
+   744→    bestFor: "Shared shuttle",
+   745→    eta: 8,
+   746→    available: 6,
+   747→    co2: "low",
+   748→  },
+   749→  {
+   750→    id: "ev",
+   751→    name: "Electric",
+   752→    emoji: "⚡",
+   753→    capacity: 4,
+   754→    basePrice: 9,
+   755→    bestFor: "Zero-emission rides",
+   756→    eta: 4,
+   757→    available: 28,
+   758→    co2: "low",
+   759→  },
+   760→  {
+   761→    id: "av",
+   762→    name: "Autonomous",
+   763→    emoji: "🤖",
+   764→    capacity: 4,
+   765→    basePrice: 7,
+   766→    bestFor: "Future fleets",
+   767→    eta: 9,
+   768→    available: 3,
+   769→    co2: "low",
+   770→  },
+   771→];
+   772→
+   773→export const DRIVER_PROFILES: DriverProfile[] = [
+   774→  {
+   775→    id: "d1",
+   776→    name: "Kofi Mensah",
+   777→    avatar: "KM",
+   778→    vehicle: "Toyota Corolla",
+   779→    vehicleType: "sedan",
+   780→    rating: 4.9,
+   781→    reputation: 96,
+   782→    earningsGoal: { weekly: 1800, progress: 78 },
+   783→    efficiency: 41,
+   784→    savingsGenerated: 1240,
+   785→    pooledTrips: 64,
+   786→    punctuality: 98,
+   787→    champion: true,
+   788→    zone: "East Legon",
+   789→  },
+   790→  {
+   791→    id: "d2",
+   792→    name: "Grace Adjei",
+   793→    avatar: "GA",
+   794→    vehicle: "Hyundai Kona EV",
+   795→    vehicleType: "ev",
+   796→    rating: 4.9,
+   797→    reputation: 94,
+   798→    earningsGoal: { weekly: 1600, progress: 82 },
+   799→    efficiency: 52,
+   800→    savingsGenerated: 980,
+   801→    pooledTrips: 71,
+   802→    punctuality: 96,
+   803→    champion: true,
+   804→    zone: "Osu",
+   805→  },
+   806→  {
+   807→    id: "d3",
+   808→    name: "Ibrahim Suleiman",
+   809→    avatar: "IS",
+   810→    vehicle: "Yamaha Moto",
+   811→    vehicleType: "moto",
+   812→    rating: 4.7,
+   813→    reputation: 88,
+   814→    earningsGoal: { weekly: 900, progress: 64 },
+   815→    efficiency: 68,
+   816→    savingsGenerated: 610,
+   817→    pooledTrips: 0,
+   818→    punctuality: 92,
+   819→    zone: "Spintex",
+   820→  },
+   821→  {
+   822→    id: "d4",
+   823→    name: "Ama Boateng",
+   824→    avatar: "AB",
+   825→    vehicle: "Toyota HiAce",
+   826→    vehicleType: "van",
+   827→    rating: 4.8,
+   828→    reputation: 91,
+   829→    earningsGoal: { weekly: 2200, progress: 71 },
+   830→    efficiency: 38,
+   831→    savingsGenerated: 1530,
+   832→    pooledTrips: 142,
+   833→    punctuality: 94,
+   834→    zone: "Airport",
+   835→  },
+   836→];
+   837→
+   838→export const CONTINUOUS_OPT_EVENTS: ContinuousOptEvent[] = [
+   839→  {
+   840→    id: "o1",
+   841→    phase: "before",
+   842→    time: "−2:14",
+   843→    title: "AI scanned 1,284 providers",
+   844→    detail: "Filtered to 8 candidates · ranked by price + ETA + safety",
+   845→    type: "scan",
+   846→  },
+   847→  {
+   848→    id: "o2",
+   849→    phase: "before",
+   850→    time: "−0:08",
+   851→    title: "Reverse auction cleared",
+   852→    detail: "Won at $11.40 — 41% below baseline",
+   853→    saving: 7.6,
+   854→    type: "switch",
+   855→  },
+   856→  {
+   857→    id: "o3",
+   858→    phase: "during",
+   859→    time: "now",
+   860→    title: "Re-routing around incident",
+   861→    detail: "Minor accident on Ring Road · saved 6 min via Labadi",
+   862→    saving: 0,
+   863→    type: "alert",
+   864→  },
+   865→  {
+   866→    id: "o4",
+   867→    phase: "during",
+   868→    time: "+1:30",
+   869→    title: "Pool merge offered",
+   870→    detail: "Ama nearby · merge to cut your fare $6",
+   871→    saving: 6,
+   872→    type: "switch",
+   873→  },
+   874→  {
+   875→    id: "o5",
+   876→    phase: "after",
+   877→    time: "+3:00",
+   878→    title: "Still watching for cheaper options",
+   879→    detail: "Will auto-switch if equivalent ride drops below your fare",
+   880→    type: "scan",
+   881→  },
+   882→  {
+   883→    id: "o6",
+   884→    phase: "after",
+   885→    time: "trip end",
+   886→    title: "Learning from this trip",
+   887→    detail: "Updates city demand model + driver reliability scores",
+   888→    type: "learn",
+   889→  },
+   890→];
+   891→
+   892→export const COMMUNITY_INTEL: CommunityIntel = {
+   893→  tripsAnalyzed: 2840610,
+   894→  routesLearned: 18420,
+   895→  poolsDiscovered: 9240,
+   896→  demandPatterns: 312,
+   897→  activeConnectors: 12,
+   898→  networkIq: 87,
+   899→};
+   900→
+   901→// ===========================================================================
+   902→// Autonomous Mobility Operating System — data
+   903→// ===========================================================================
+   904→
+   905→export const OPTIMIZATION_PROFILES: ProfileMeta[] = [
+   906→  { id: "savings", name: "Savings", emoji: "💰", objective: "Minimize cost above all", color: "#4ade80", weights: { price: 0.7, time: 0.1, safety: 0.1, comfort: 0.05, eco: 0.05 } },
+   907→  { id: "fastest", name: "Fastest", emoji: "⚡", objective: "Minimize total travel time", color: "#ef4444", weights: { price: 0.1, time: 0.7, safety: 0.1, comfort: 0.05, eco: 0.05 } },
+   908→  { id: "safety", name: "Safety", emoji: "🛡️", objective: "Highest-safety routes only", color: "#60a5fa", weights: { price: 0.1, time: 0.1, safety: 0.6, comfort: 0.15, eco: 0.05 } },
+   909→  { id: "comfort", name: "Comfort", emoji: "🛋️", objective: "Premium, low-effort rides", color: "#d4af37", weights: { price: 0.1, time: 0.1, safety: 0.15, comfort: 0.6, eco: 0.05 } },
+   910→  { id: "eco", name: "Eco", emoji: "🌱", objective: "Lowest carbon footprint", color: "#22c55e", weights: { price: 0.15, time: 0.1, safety: 0.1, comfort: 0.1, eco: 0.55 } },
+   911→  { id: "balanced", name: "Balanced", emoji: "⚖️", objective: "Equal weight optimization", color: "#72b1a6", weights: { price: 0.25, time: 0.25, safety: 0.2, comfort: 0.15, eco: 0.15 } },
+   912→  { id: "accessibility", name: "Accessibility", emoji: "♿", objective: "Accessible vehicles & routes", color: "#a78bfa", weights: { price: 0.1, time: 0.1, safety: 0.3, comfort: 0.4, eco: 0.1 } },
+   913→  { id: "business", name: "Business", emoji: "💼", objective: "Policy-compliant executive travel", color: "#64748b", weights: { price: 0.15, time: 0.3, safety: 0.25, comfort: 0.25, eco: 0.05 } },
+   914→  { id: "family", name: "Family", emoji: "👨‍👩‍👧", objective: "Child seats, space, safety", color: "#fb7185", weights: { price: 0.15, time: 0.1, safety: 0.4, comfort: 0.3, eco: 0.05 } },
+   915→  { id: "parcel", name: "Parcel", emoji: "📦", objective: "Cheapest reliable delivery", color: "#fb923c", weights: { price: 0.6, time: 0.2, safety: 0.1, comfort: 0, eco: 0.1 } },
+   916→];
+   917→
+   918→export const NPD_OFFERS: NPDOffer[] = [
+   919→  { id: "n1", driverName: "Kwabena O.", origin: "East Legon", destination: "Airport", departInMin: 12, seats: 2, price: 6, vehicle: "Toyota Camry", rating: 4.6, matchPct: 92, avatar: "KO" },
+   920→  { id: "n2", driverName: "Selina A.", origin: "Madina", destination: "Osu", departInMin: 25, seats: 1, price: 4, vehicle: "Hyundai Accent", rating: 4.4, matchPct: 78, avatar: "SA" },
+   921→  { id: "n3", driverName: "David K.", origin: "Legon", destination: "Circle", departInMin: 8, seats: 3, price: 3.5, vehicle: "Kia Cerato", rating: 4.7, matchPct: 88, avatar: "DK" },
+   922→  { id: "n4", driverName: "Akua M.", origin: "Spintex", destination: "Labadi", departInMin: 18, seats: 2, price: 5, vehicle: "Honda CR-V", rating: 4.5, matchPct: 84, avatar: "AM" },
+   923→  { id: "n5", driverName: "Yaw D.", origin: "Tesano", destination: "Airport", departInMin: 32, seats: 1, price: 7, vehicle: "Nissan Almera", rating: 4.3, matchPct: 71, avatar: "YD" },
+   924→];
+   925→
+   926→export const RETURN_RIDES: ReturnRide[] = [
+   927→  { id: "r1", driverName: "Ibrahim S.", origin: "Airport", destination: "Downtown", departInMin: 18, price: 8, seats: 2, vehicle: "Toyota Corolla", rating: 4.8, discountPct: 42 },
+   928→  { id: "r2", driverName: "Grace A.", origin: "Osu", destination: "East Legon", departInMin: 7, price: 5, seats: 1, vehicle: "Hyundai Kona EV", rating: 4.9, discountPct: 38 },
+   929→  { id: "r3", driverName: "Michael T.", origin: "Labadi", destination: "Circle", departInMin: 22, price: 6, seats: 3, vehicle: "Suzuki Swift", rating: 4.6, discountPct: 35 },
+   930→  { id: "r4", driverName: "Comfort A.", origin: "Accra Mall", destination: "Madina", departInMin: 12, price: 4, seats: 2, vehicle: "Kia Picanto", rating: 4.7, discountPct: 45 },
+   931→];
+   932→
+   933→export const PERSONAL_DRIVERS: PersonalDriver[] = [
+   934→  { id: "p1", name: "Kofi Mensah", avatar: "KM", specialty: "Weekly school transport", weeklyPrice: 180, rating: 4.9, vehicle: "Toyota HiAce", zone: "East Legon → AIS", subscribers: 14 },
+   935→  { id: "p2", name: "Grace Adjei", avatar: "GA", specialty: "Corporate executive", weeklyPrice: 420, rating: 4.9, vehicle: "Mercedes E-Class", zone: "Airport → Octagon", subscribers: 6 },
+   936→  { id: "p3", name: "Ama Boateng", avatar: "AB", specialty: "Family transport", weeklyPrice: 240, rating: 4.8, vehicle: "Toyota Sienna", zone: "Spintex", subscribers: 9 },
+   937→  { id: "p4", name: "Daniel Q.", avatar: "DQ", specialty: "Airport specialist", weeklyPrice: 150, rating: 4.8, vehicle: "Hyundai Sonata", zone: "Citywide", subscribers: 22 },
+   938→  { id: "p5", name: "Rashid M.", avatar: "RM", specialty: "Medical appointments", weeklyPrice: 200, rating: 4.7, vehicle: "Kia Carens", zone: "Ridge → Korle-Bu", subscribers: 7 },
+   939→];
+   940→
+   941→export const COMMUTE_GROUPS: CommuteGroup[] = [
+   942→  { id: "g1", route: "East Legon → Octagon", riderCount: 4, currentCost: 160, optimizedCost: 74, departAt: "Mon 8:00 AM", confidence: 94, neighborhoods: ["East Legon", "Adjiringanor"] },
+   943→  { id: "g2", route: "Madina → University", riderCount: 6, currentCost: 240, optimizedCost: 102, departAt: "Daily 7:15 AM", confidence: 88, neighborhoods: ["Madina", "Haatso"] },
+   944→  { id: "g3", route: "Spintex → Airport", riderCount: 3, currentCost: 135, optimizedCost: 68, departAt: "Tue 6:30 AM", confidence: 81, neighborhoods: ["Spintex", "Teshie"] },
+   945→  { id: "g4", route: "Tema → Accra CBD", riderCount: 8, currentCost: 520, optimizedCost: 210, departAt: "Daily 5:45 AM", confidence: 91, neighborhoods: ["Tema", "Community 25"] },
+   946→];
+   947→
+   948→export const AI2AI_TRANSACTIONS: AI2AITransaction[] = [
+   949→  { id: "a1", buyerAgent: "Rider Savings AI", sellerAgent: "Fleet Dispatch AI", asset: "Airport shuttle · 4 seats", currentPrice: 11.4, openingPrice: 19, rounds: 6, status: "settled", lastAction: "Settled at $11.40", trend: [19, 17.5, 16, 14.8, 13.2, 11.4] },
+   950→  { id: "a2", buyerAgent: "Merchant Delivery AI", sellerAgent: "Courier Pool AI", asset: "Parcel · Osu → Labadi", currentPrice: 4.2, openingPrice: 8, rounds: 4, status: "negotiating", lastAction: "Counter $4.20", trend: [8, 6.5, 5.1, 4.2] },
+   951→  { id: "a3", buyerAgent: "Commute Pool AI", sellerAgent: "NPD Broadcast AI", asset: "6-seat commute · Madina", currentPrice: 3.8, openingPrice: 7, rounds: 5, status: "settled", lastAction: "Settled at $3.80", trend: [7, 6, 5.2, 4.4, 3.8] },
+   952→  { id: "a4", buyerAgent: "Rider Fastest AI", sellerAgent: "Moto Fleet AI", asset: "Express moto · Spintex", currentPrice: 5.5, openingPrice: 6.5, rounds: 3, status: "negotiating", lastAction: "Demand $5.50", trend: [6.5, 6, 5.5] },
+   953→];
+   954→
+   955→export const MERCHANT_ORDERS: MerchantOrder[] = [
+   956→  { id: "m1", merchant: "Accra Gadgets", pickup: "Osu Warehouse", dropoff: "Labadi", dimensions: "30×20×15cm", price: 15, deadline: "Today 6 PM", status: "dispatched", courier: "Bolt Courier", createdAt: "2h ago" },
+   957→  { id: "m2", merchant: "Spintex Pharma", pickup: "Spintex Depot", dropoff: "East Legon", dimensions: "20×15×10cm", price: 12, deadline: "Today 4 PM", status: "optimized", createdAt: "18m ago" },
+   958→  { id: "m3", merchant: "Makola Styles", pickup: "Makola Market", dropoff: "Tema", dimensions: "40×30×25cm", price: 22, deadline: "Tomorrow 12 PM", status: "created", createdAt: "5m ago" },
+   959→];
+   960→
+   961→export const FLEET_OPERATORS: FleetOperator[] = [
+   962→  { id: "f1", name: "CityCab Dispatch", vehicleCount: 240, utilization: 78, avgFare: 14, zones: ["CBD", "Osu", "Airport"], connected: true },
+   963→  { id: "f2", name: "GreenLine Shuttles", vehicleCount: 60, utilization: 84, avgFare: 6, zones: ["East Legon", "Legon"], connected: true },
+   964→  { id: "f3", name: "ExpressCouriers", vehicleCount: 120, utilization: 71, avgFare: 9, zones: ["Citywide"], connected: true },
+   965→  { id: "f4", name: "CorpFleet Africa", vehicleCount: 45, utilization: 66, avgFare: 22, zones: ["Airport", "Octagon"], connected: false },
+   966→];
+   967→
+   968→export const USER_TYPES: { id: UserType; label: string; emoji: string; description: string }[] = [
+   969→  { id: "rider", label: "Rider", emoji: "🧍", description: "Request rides & deliveries" },
+   970→  { id: "driver", label: "Driver", emoji: "🚗", description: "Accept rides, earn income" },
+   971→  { id: "fleet", label: "Fleet", emoji: "🚐", description: "Manage vehicle fleets" },
+   972→  { id: "merchant", label: "Merchant", emoji: "🏪", description: "Ship parcels via Oryx" },
+   973→  { id: "courier", label: "Courier", emoji: "📦", description: "Deliver parcels & food" },
+   974→  { id: "npd", label: "NPD", emoji: "🚙", description: "Sell seats on your trips" },
+   975→  { id: "admin", label: "Admin", emoji: "⚙️", description: "Manage waitlist & network" },
+   976→];
+   977→

@@ -1,63 +1,181 @@
-// Oryx Prisma schema — mobility marketplace persistence
+// Oryx — Autonomous Mobility Operating System
+// Neon PostgreSQL (pooled for runtime, direct for migrations)
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+// ---- Auth ---------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String?
+  name         String?
+  types        String   @default("rider") // comma-separated: rider,driver,fleet,merchant,courier,npd,admin
+  currentType  String   @default("rider")
+  status       String   @default("active") // waitlist | active
+  isDemo       Boolean  @default(false)
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  rides        Ride[]
+  npdOffers    NPDOffer[]
 }
 
+// ---- Mobility marketplace ----------------------------------------------
+
 model Ride {
-  id           String   @id @default(cuid())
-  createdAt    DateTime @default(now())
-  origin       String
-  destination  String
-  distanceKm   Float
-  durationMin  Int
-  initialPrice Float
-  finalPrice   Float
-  savings      Float
-  providerName String
-  driverName   String
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  origin        String
+  destination   String
+  distanceKm    Float
+  durationMin   Int
+  initialPrice  Float
+  finalPrice    Float
+  savings       Float
+  providerName  String
+  driverName    String
   agentStrategy String
-  status       String   @default("booked")
+  mode          String   @default("people") // people | parcel
+  status        String   @default("booked")
 }
 
 model Provider {
-  id        String  @id
-  name      String
-  category  String
-  rating    Float
-  baseFare  Float
-  perKm     Float
-  perMin    Float
-  wins      Int     @default(0)
+  id                   String  @id
+  name                 String
+  category             String
+  rating               Float
+  baseFare             Float
+  perKm                Float
+  perMin               Float
+  wins                 Int     @default(0)
   totalSavingsDelivered Float @default(0)
 }
 
 model LeaderboardEntry {
-  id        String  @id @default(cuid())
-  name      String
-  avatar    String
-  saved     Float
-  rides     Int
-  streak    Int
-  rank      Int
+  id           String   @id @default(cuid())
+  name         String
+  avatar       String
+  saved        Float
+  rides        Int
+  streak       Int
+  rank         Int
   neighborhood String?
-  change    Int     @default(0)
-  isYou     Boolean @default(false)
-  updatedAt DateTime @updatedAt
+  change       Int      @default(0)
+  isYou        Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
 }
 
 model SavingsStat {
-  id            String  @id @default("singleton")
-  totalSaved    Float   @default(0)
-  ytdSaved      Float   @default(0)
-  ridesCount    Int     @default(0)
-  co2Saved      Float   @default(0)
-  hoursSaved    Float   @default(0)
-  streak        Int     @default(0)
-  belowAvgPct   Int     @default(0)
+  id          String  @id @default("singleton")
+  totalSaved  Float   @default(0)
+  ytdSaved    Float   @default(0)
+  ridesCount  Int     @default(0)
+  co2Saved    Float   @default(0)
+  hoursSaved  Float   @default(0)
+  streak      Int     @default(0)
+  belowAvgPct Int     @default(0)
+}
+
+// ---- Mobility OS: NPD, return rides, personal drivers, commutes --------
+
+model NPDOffer {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  driverName String
+  origin     String
+  destination String
+  departAt   DateTime
+  seats      Int      @default(1)
+  price      Float
+  vehicle    String
+  notes      String?
+  status     String   @default("open") // open | matched | closed
+}
+
+model ReturnRide {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  driverName  String
+  origin      String
+  destination String
+  departInMin Int
+  price       Float
+  seats       Int      @default(1)
+  vehicle     String
+  rating      Float    @default(4.8)
+  status      String   @default("open")
+}
+
+model PersonalDriver {
+  id          String   @id @default(cuid())
+  name        String
+  avatar      String
+  specialty   String
+  weeklyPrice Float
+  rating      Float
+  vehicle     String
+  zone        String
+  subscribers Int      @default(0)
+}
+
+model CommuteGroup {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  route         String
+  riderCount    Int
+  currentCost   Float
+  optimizedCost Float
+  departAt      String
+  status        String   @default("proposed") // proposed | accepted | auctioning | booked
+  confidence    Int      @default(80)
+}
+
+model MerchantOrder {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  merchant   String
+  pickup     String
+  dropoff    String
+  dimensions String
+  price      Float
+  deadline   String
+  status     String   @default("created") // created | optimized | dispatched | delivered
+  courier    String?
+}
+
+model Parcel {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  pickup     String
+  dropoff    String
+  size       String
+  weight     Float
+  deadline   String
+  price      Float
+  status     String   @default("open")
+}
+
+model AI2AITransaction {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  buyerAgent String
+  sellerAgent String
+  asset      String
+  price      Float
+  status     String   @default("negotiating") // negotiating | settled | rejected
+  rounds     Int      @default(0)
 }

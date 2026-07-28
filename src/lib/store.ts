@@ -75,6 +75,18 @@ interface OryxStore {
   // Continuous optimization — post-booking monitoring
   continuousMonitoring: boolean;
   setContinuousMonitoring: (v: boolean) => void;
+
+  // Mobility OS contract
+  mode: import("./types").AppMode;
+  setMode: (m: import("./types").AppMode) => void;
+  activeProfile: import("./types").OptimizationProfile;
+  setActiveProfile: (p: import("./types").OptimizationProfile) => void;
+  currentType: import("./types").UserType;
+  setCurrentType: (t: import("./types").UserType) => void;
+  userTypes: import("./types").UserType[];
+  setUserTypes: (t: import("./types").UserType[]) => void;
+  userName: string | null;
+  setUserName: (n: string | null) => void;
 }
 
 const emptyAuction: AuctionState = {
@@ -259,9 +271,7 @@ export const useOryx = create<OryxStore>((set, get) => ({
         phase,
       },
     });
-    if (next <= 0 && auction.phase !== "booked") {
-      // finalize — keep best as winner but don't auto-book (let user confirm)
-    }
+    // when countdown hits 0, phase is already set to "final" above
   },
 
   endAuction: () => {
@@ -318,4 +328,15 @@ export const useOryx = create<OryxStore>((set, get) => ({
 
   continuousMonitoring: true,
   setContinuousMonitoring: (v) => set({ continuousMonitoring: v }),
+
+  mode: "people",
+  setMode: (m) => set({ mode: m }),
+  activeProfile: "balanced",
+  setActiveProfile: (p) => set({ activeProfile: p }),
+  currentType: "rider",
+  setCurrentType: (t) => set({ currentType: t }),
+  userTypes: ["rider"],
+  setUserTypes: (t) => set({ userTypes: t }),
+  userName: null,
+  setUserName: (n) => set({ userName: n }),
 }));

@@ -13,6 +13,15 @@ import type {
   DriverProfile,
   ContinuousOptEvent,
   CommunityIntel,
+  ProfileMeta,
+  NPDOffer,
+  ReturnRide,
+  PersonalDriver,
+  CommuteGroup,
+  AI2AITransaction,
+  MerchantOrder,
+  FleetOperator,
+  UserType,
 } from "./types";
 
 // Accra city center — matches user timezone Africa/Accra
@@ -336,8 +345,22 @@ export const VEHICLES = [
 export function generateVehicles(
   center: { lat: number; lng: number },
   count = 14
-) {
-  const vehicles = [];
+): Array<{
+  id: string;
+  providerId: string;
+  lat: number;
+  lng: number;
+  heading: number;
+  eta: number;
+}> {
+  const vehicles: Array<{
+    id: string;
+    providerId: string;
+    lat: number;
+    lng: number;
+    heading: number;
+    eta: number;
+  }> = [];
   for (let i = 0; i < count; i++) {
     const provider = PROVIDERS[Math.floor(Math.random() * 5)];
     const angle = Math.random() * Math.PI * 2;
@@ -888,3 +911,80 @@ export const COMMUNITY_INTEL: CommunityIntel = {
   activeConnectors: 12,
   networkIq: 87,
 };
+
+// ===========================================================================
+// Autonomous Mobility Operating System — data
+// ===========================================================================
+
+export const OPTIMIZATION_PROFILES: ProfileMeta[] = [
+  { id: "savings", name: "Savings", emoji: "💰", objective: "Minimize cost above all", color: "#4ade80", weights: { price: 0.7, time: 0.1, safety: 0.1, comfort: 0.05, eco: 0.05 } },
+  { id: "fastest", name: "Fastest", emoji: "⚡", objective: "Minimize total travel time", color: "#ef4444", weights: { price: 0.1, time: 0.7, safety: 0.1, comfort: 0.05, eco: 0.05 } },
+  { id: "safety", name: "Safety", emoji: "🛡️", objective: "Highest-safety routes only", color: "#60a5fa", weights: { price: 0.1, time: 0.1, safety: 0.6, comfort: 0.15, eco: 0.05 } },
+  { id: "comfort", name: "Comfort", emoji: "🛋️", objective: "Premium, low-effort rides", color: "#d4af37", weights: { price: 0.1, time: 0.1, safety: 0.15, comfort: 0.6, eco: 0.05 } },
+  { id: "eco", name: "Eco", emoji: "🌱", objective: "Lowest carbon footprint", color: "#22c55e", weights: { price: 0.15, time: 0.1, safety: 0.1, comfort: 0.1, eco: 0.55 } },
+  { id: "balanced", name: "Balanced", emoji: "⚖️", objective: "Equal weight optimization", color: "#72b1a6", weights: { price: 0.25, time: 0.25, safety: 0.2, comfort: 0.15, eco: 0.15 } },
+  { id: "accessibility", name: "Accessibility", emoji: "♿", objective: "Accessible vehicles & routes", color: "#a78bfa", weights: { price: 0.1, time: 0.1, safety: 0.3, comfort: 0.4, eco: 0.1 } },
+  { id: "business", name: "Business", emoji: "💼", objective: "Policy-compliant executive travel", color: "#64748b", weights: { price: 0.15, time: 0.3, safety: 0.25, comfort: 0.25, eco: 0.05 } },
+  { id: "family", name: "Family", emoji: "👨‍👩‍👧", objective: "Child seats, space, safety", color: "#fb7185", weights: { price: 0.15, time: 0.1, safety: 0.4, comfort: 0.3, eco: 0.05 } },
+  { id: "parcel", name: "Parcel", emoji: "📦", objective: "Cheapest reliable delivery", color: "#fb923c", weights: { price: 0.6, time: 0.2, safety: 0.1, comfort: 0, eco: 0.1 } },
+];
+
+export const NPD_OFFERS: NPDOffer[] = [
+  { id: "n1", driverName: "Kwabena O.", origin: "East Legon", destination: "Airport", departInMin: 12, seats: 2, price: 6, vehicle: "Toyota Camry", rating: 4.6, matchPct: 92, avatar: "KO" },
+  { id: "n2", driverName: "Selina A.", origin: "Madina", destination: "Osu", departInMin: 25, seats: 1, price: 4, vehicle: "Hyundai Accent", rating: 4.4, matchPct: 78, avatar: "SA" },
+  { id: "n3", driverName: "David K.", origin: "Legon", destination: "Circle", departInMin: 8, seats: 3, price: 3.5, vehicle: "Kia Cerato", rating: 4.7, matchPct: 88, avatar: "DK" },
+  { id: "n4", driverName: "Akua M.", origin: "Spintex", destination: "Labadi", departInMin: 18, seats: 2, price: 5, vehicle: "Honda CR-V", rating: 4.5, matchPct: 84, avatar: "AM" },
+  { id: "n5", driverName: "Yaw D.", origin: "Tesano", destination: "Airport", departInMin: 32, seats: 1, price: 7, vehicle: "Nissan Almera", rating: 4.3, matchPct: 71, avatar: "YD" },
+];
+
+export const RETURN_RIDES: ReturnRide[] = [
+  { id: "r1", driverName: "Ibrahim S.", origin: "Airport", destination: "Downtown", departInMin: 18, price: 8, seats: 2, vehicle: "Toyota Corolla", rating: 4.8, discountPct: 42 },
+  { id: "r2", driverName: "Grace A.", origin: "Osu", destination: "East Legon", departInMin: 7, price: 5, seats: 1, vehicle: "Hyundai Kona EV", rating: 4.9, discountPct: 38 },
+  { id: "r3", driverName: "Michael T.", origin: "Labadi", destination: "Circle", departInMin: 22, price: 6, seats: 3, vehicle: "Suzuki Swift", rating: 4.6, discountPct: 35 },
+  { id: "r4", driverName: "Comfort A.", origin: "Accra Mall", destination: "Madina", departInMin: 12, price: 4, seats: 2, vehicle: "Kia Picanto", rating: 4.7, discountPct: 45 },
+];
+
+export const PERSONAL_DRIVERS: PersonalDriver[] = [
+  { id: "p1", name: "Kofi Mensah", avatar: "KM", specialty: "Weekly school transport", weeklyPrice: 180, rating: 4.9, vehicle: "Toyota HiAce", zone: "East Legon → AIS", subscribers: 14 },
+  { id: "p2", name: "Grace Adjei", avatar: "GA", specialty: "Corporate executive", weeklyPrice: 420, rating: 4.9, vehicle: "Mercedes E-Class", zone: "Airport → Octagon", subscribers: 6 },
+  { id: "p3", name: "Ama Boateng", avatar: "AB", specialty: "Family transport", weeklyPrice: 240, rating: 4.8, vehicle: "Toyota Sienna", zone: "Spintex", subscribers: 9 },
+  { id: "p4", name: "Daniel Q.", avatar: "DQ", specialty: "Airport specialist", weeklyPrice: 150, rating: 4.8, vehicle: "Hyundai Sonata", zone: "Citywide", subscribers: 22 },
+  { id: "p5", name: "Rashid M.", avatar: "RM", specialty: "Medical appointments", weeklyPrice: 200, rating: 4.7, vehicle: "Kia Carens", zone: "Ridge → Korle-Bu", subscribers: 7 },
+];
+
+export const COMMUTE_GROUPS: CommuteGroup[] = [
+  { id: "g1", route: "East Legon → Octagon", riderCount: 4, currentCost: 160, optimizedCost: 74, departAt: "Mon 8:00 AM", confidence: 94, neighborhoods: ["East Legon", "Adjiringanor"] },
+  { id: "g2", route: "Madina → University", riderCount: 6, currentCost: 240, optimizedCost: 102, departAt: "Daily 7:15 AM", confidence: 88, neighborhoods: ["Madina", "Haatso"] },
+  { id: "g3", route: "Spintex → Airport", riderCount: 3, currentCost: 135, optimizedCost: 68, departAt: "Tue 6:30 AM", confidence: 81, neighborhoods: ["Spintex", "Teshie"] },
+  { id: "g4", route: "Tema → Accra CBD", riderCount: 8, currentCost: 520, optimizedCost: 210, departAt: "Daily 5:45 AM", confidence: 91, neighborhoods: ["Tema", "Community 25"] },
+];
+
+export const AI2AI_TRANSACTIONS: AI2AITransaction[] = [
+  { id: "a1", buyerAgent: "Rider Savings AI", sellerAgent: "Fleet Dispatch AI", asset: "Airport shuttle · 4 seats", currentPrice: 11.4, openingPrice: 19, rounds: 6, status: "settled", lastAction: "Settled at $11.40", trend: [19, 17.5, 16, 14.8, 13.2, 11.4] },
+  { id: "a2", buyerAgent: "Merchant Delivery AI", sellerAgent: "Courier Pool AI", asset: "Parcel · Osu → Labadi", currentPrice: 4.2, openingPrice: 8, rounds: 4, status: "negotiating", lastAction: "Counter $4.20", trend: [8, 6.5, 5.1, 4.2] },
+  { id: "a3", buyerAgent: "Commute Pool AI", sellerAgent: "NPD Broadcast AI", asset: "6-seat commute · Madina", currentPrice: 3.8, openingPrice: 7, rounds: 5, status: "settled", lastAction: "Settled at $3.80", trend: [7, 6, 5.2, 4.4, 3.8] },
+  { id: "a4", buyerAgent: "Rider Fastest AI", sellerAgent: "Moto Fleet AI", asset: "Express moto · Spintex", currentPrice: 5.5, openingPrice: 6.5, rounds: 3, status: "negotiating", lastAction: "Demand $5.50", trend: [6.5, 6, 5.5] },
+];
+
+export const MERCHANT_ORDERS: MerchantOrder[] = [
+  { id: "m1", merchant: "Accra Gadgets", pickup: "Osu Warehouse", dropoff: "Labadi", dimensions: "30×20×15cm", price: 15, deadline: "Today 6 PM", status: "dispatched", courier: "Bolt Courier", createdAt: "2h ago" },
+  { id: "m2", merchant: "Spintex Pharma", pickup: "Spintex Depot", dropoff: "East Legon", dimensions: "20×15×10cm", price: 12, deadline: "Today 4 PM", status: "optimized", createdAt: "18m ago" },
+  { id: "m3", merchant: "Makola Styles", pickup: "Makola Market", dropoff: "Tema", dimensions: "40×30×25cm", price: 22, deadline: "Tomorrow 12 PM", status: "created", createdAt: "5m ago" },
+];
+
+export const FLEET_OPERATORS: FleetOperator[] = [
+  { id: "f1", name: "CityCab Dispatch", vehicleCount: 240, utilization: 78, avgFare: 14, zones: ["CBD", "Osu", "Airport"], connected: true },
+  { id: "f2", name: "GreenLine Shuttles", vehicleCount: 60, utilization: 84, avgFare: 6, zones: ["East Legon", "Legon"], connected: true },
+  { id: "f3", name: "ExpressCouriers", vehicleCount: 120, utilization: 71, avgFare: 9, zones: ["Citywide"], connected: true },
+  { id: "f4", name: "CorpFleet Africa", vehicleCount: 45, utilization: 66, avgFare: 22, zones: ["Airport", "Octagon"], connected: false },
+];
+
+export const USER_TYPES: { id: UserType; label: string; emoji: string; description: string }[] = [
+  { id: "rider", label: "Rider", emoji: "🧍", description: "Request rides & deliveries" },
+  { id: "driver", label: "Driver", emoji: "🚗", description: "Accept rides, earn income" },
+  { id: "fleet", label: "Fleet", emoji: "🚐", description: "Manage vehicle fleets" },
+  { id: "merchant", label: "Merchant", emoji: "🏪", description: "Ship parcels via Oryx" },
+  { id: "courier", label: "Courier", emoji: "📦", description: "Deliver parcels & food" },
+  { id: "npd", label: "NPD", emoji: "🚙", description: "Sell seats on your trips" },
+  { id: "admin", label: "Admin", emoji: "⚙️", description: "Manage waitlist & network" },
+];

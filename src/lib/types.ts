@@ -301,3 +301,174 @@ export interface CommunityIntel {
   activeConnectors: number;
   networkIq: number; // 0-100 collective intelligence score
 }
+
+// ===========================================================================
+// Autonomous Mobility Operating System — augmentation types
+// ===========================================================================
+
+export type AppMode = "people" | "parcel";
+
+export type UserType =
+  | "rider"
+  | "driver"
+  | "fleet"
+  | "merchant"
+  | "courier"
+  | "npd"
+  | "admin";
+
+export type OptimizationProfile =
+  | "savings"
+  | "fastest"
+  | "safety"
+  | "comfort"
+  | "eco"
+  | "balanced"
+  | "accessibility"
+  | "business"
+  | "family"
+  | "parcel";
+
+export interface ProfileMeta {
+  id: OptimizationProfile;
+  name: string;
+  emoji: string;
+  objective: string;
+  color: string;
+  weights: { price: number; time: number; safety: number; comfort: number; eco: number };
+}
+
+export type HopMode =
+  | "walk"
+  | "bike"
+  | "moto"
+  | "car"
+  | "shuttle"
+  | "transit"
+  | "npd"
+  | "taxi"
+  | "ride-hail";
+
+export interface JourneyHop {
+  mode: HopMode;
+  emoji: string;
+  label: string;
+  detail: string;
+  durationMin: number;
+  price: number;
+  co2: number;
+  provider?: string;
+}
+
+export interface ComposedJourney {
+  id: string;
+  hops: JourneyHop[];
+  totalPrice: number;
+  totalDuration: number;
+  walkDistance: number;
+  co2: number;
+  score: number; // profile-weighted score, lower = better
+  savings: number; // vs direct baseline
+  badge?: string;
+  safetyScore: number;
+  comfortScore: number;
+}
+
+export interface NPDOffer {
+  id: string;
+  driverName: string;
+  origin: string;
+  destination: string;
+  departInMin: number;
+  seats: number;
+  price: number;
+  vehicle: string;
+  rating: number;
+  matchPct: number;
+  avatar: string;
+}
+
+export interface ReturnRide {
+  id: string;
+  driverName: string;
+  origin: string;
+  destination: string;
+  departInMin: number;
+  price: number;
+  seats: number;
+  vehicle: string;
+  rating: number;
+  discountPct: number;
+}
+
+export interface PersonalDriver {
+  id: string;
+  name: string;
+  avatar: string;
+  specialty: string;
+  weeklyPrice: number;
+  rating: number;
+  vehicle: string;
+  zone: string;
+  subscribers: number;
+}
+
+export interface CommuteGroup {
+  id: string;
+  route: string;
+  riderCount: number;
+  currentCost: number;
+  optimizedCost: number;
+  departAt: string;
+  confidence: number;
+  neighborhoods: string[];
+}
+
+export interface AI2AITransaction {
+  id: string;
+  buyerAgent: string;
+  sellerAgent: string;
+  asset: string;
+  currentPrice: number;
+  openingPrice: number;
+  rounds: number;
+  status: "negotiating" | "settled" | "rejected";
+  lastAction: string;
+  trend: number[]; // price per round
+}
+
+export interface MerchantOrder {
+  id: string;
+  merchant: string;
+  pickup: string;
+  dropoff: string;
+  dimensions: string;
+  price: number;
+  deadline: string;
+  status: "created" | "optimized" | "dispatched" | "delivered";
+  courier?: string;
+  createdAt: string;
+}
+
+export interface ParcelOrder {
+  id: string;
+  pickup: string;
+  dropoff: string;
+  size: "small" | "medium" | "large";
+  weightKg: number;
+  deadline: string;
+  price: number;
+  courier?: string;
+  status: "open" | "dispatched" | "delivered";
+}
+
+export interface FleetOperator {
+  id: string;
+  name: string;
+  vehicleCount: number;
+  utilization: number;
+  avgFare: number;
+  zones: string[];
+  connected: boolean;
+}
+
