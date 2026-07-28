@@ -5,7 +5,8 @@ import {
   Gavel,
   Layers,
   Route,
-  Bot,
+  Users,
+  Network,
   Wallet,
 } from "lucide-react";
 import DestinationSearch from "./destination-search";
@@ -14,15 +15,21 @@ import WaitOptimizer from "./wait-optimizer";
 import DestinationIntel from "./destination-intel";
 import PoolSuggestions from "./pool-suggestions";
 import RouteAlternatives from "./route-alternatives";
+import { VehicleMarketplace } from "./vehicle-marketplace";
+import { CalendarIntelligence } from "./calendar-intelligence";
 import AuctionPanel from "./auction-panel";
-import AgentSelector from "./agent-selector";
+import { MobilityTeam } from "./mobility-team";
+import { IntelligenceNetwork } from "./intelligence-network";
+import { DriverIntelligence } from "./driver-intelligence";
+import { ContinuousOptimization } from "./continuous-optimization";
 import { SavingsPanel } from "./savings-panel";
 
 const FULL_TABS = [
   { id: "auction", label: "Auction", icon: Gavel },
   { id: "compare", label: "Compare", icon: Layers },
   { id: "routes", label: "Routes", icon: Route },
-  { id: "agent", label: "Agent", icon: Bot },
+  { id: "team", label: "Team", icon: Users },
+  { id: "network", label: "Network", icon: Network },
   { id: "savings", label: "Savings", icon: Wallet },
 ] as const;
 
@@ -61,7 +68,9 @@ export default function SheetContent() {
           </div>
         )}
         <ProviderComparison />
+        <VehicleMarketplace />
         <WaitOptimizer />
+        <CalendarIntelligence />
         <DestinationIntel />
         <PoolSuggestions />
         <RouteAlternatives />
@@ -73,26 +82,26 @@ export default function SheetContent() {
   return (
     <div>
       {/* Tab bar */}
-      <div className="sticky top-0 z-10 glass-strong flex items-center gap-1 border-b border-border/40 px-2 py-2">
+      <div className="sticky top-0 z-10 glass-strong flex items-center gap-0.5 border-b border-border/40 px-1.5 py-2">
         {FULL_TABS.map((t) => {
           const active = activeView === t.id;
           return (
             <button
               key={t.id}
               onClick={() => setActiveView(t.id as any)}
-              className={`relative flex flex-1 flex-col items-center gap-1 rounded-xl py-1.5 transition ${
+              className={`relative flex flex-1 flex-col items-center gap-1 rounded-lg py-1.5 transition ${
                 active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {active && (
                 <motion.div
                   layoutId="tab-active"
-                  className="absolute inset-0 rounded-xl bg-foreground/[0.08]"
+                  className="absolute inset-0 rounded-lg bg-foreground/[0.08]"
                   transition={{ type: "spring", stiffness: 400, damping: 32 }}
                 />
               )}
               <t.icon className="relative h-4 w-4" />
-              <span className="relative text-[10px] font-bold uppercase tracking-wide">
+              <span className="relative text-[9px] font-bold uppercase tracking-wide">
                 {t.label}
               </span>
             </button>
@@ -108,19 +117,38 @@ export default function SheetContent() {
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.2 }}
         >
-          {activeView === "auction" && <AuctionPanel />}
+          {activeView === "auction" && (
+            <div>
+              <AuctionPanel />
+              <div className="px-4 pb-8">
+                <ContinuousOptimization />
+              </div>
+            </div>
+          )}
           {activeView === "compare" && (
             <div>
               <ProviderComparison />
-              <WaitOptimizer />
+              <div className="px-4 pb-8">
+                <VehicleMarketplace />
+                <WaitOptimizer />
+                <CalendarIntelligence />
+              </div>
             </div>
           )}
           {activeView === "routes" && (
-            <div className="px-4 pb-6 pt-3">
+            <div className="px-4 pb-8 pt-3">
               <RouteAlternatives />
             </div>
           )}
-          {activeView === "agent" && <AgentSelector />}
+          {activeView === "team" && <MobilityTeam />}
+          {activeView === "network" && (
+            <div>
+              <IntelligenceNetwork />
+              <div className="px-4 pb-8">
+                <DriverIntelligence />
+              </div>
+            </div>
+          )}
           {activeView === "savings" && <SavingsPanel />}
         </motion.div>
       </AnimatePresence>

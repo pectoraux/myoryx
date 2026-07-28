@@ -232,9 +232,31 @@ export default function AuctionPanel() {
           </div>
         </motion.div>
 
+        {/* Continuous monitoring banner — post-booking */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-3 flex items-center gap-2.5 rounded-2xl border border-cyan-500/30 bg-cyan-500/[0.05] p-3"
+        >
+          <motion.span
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ repeat: Infinity, duration: 1.6 }}
+            className="h-2 w-2 shrink-0 rounded-full bg-cyan-400"
+          />
+          <div className="flex-1">
+            <div className="text-xs font-bold text-cyan-400">
+              AI still watching this ride
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              Will auto-switch if a cheaper equivalent appears before pickup
+            </div>
+          </div>
+        </motion.div>
+
         <button
           onClick={handleReset}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-border/60 py-3.5 text-sm font-bold text-foreground transition hover:bg-foreground/[0.04]"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-border/60 py-3.5 text-sm font-bold text-foreground transition hover:bg-foreground/[0.04]"
         >
           <RotateCcw className="h-4 w-4" />
           New ride

@@ -52,3 +52,34 @@ Self-Verification (Agent Browser + VLM):
 
 Stage Summary:
 - Oryx is complete and browser-verified end-to-end. The live reverse auction works via WebSocket (gateway) with a graceful local fallback. All 10+ feature layers render and interact correctly. Both the Next.js dev server (3000) and auction mini-service (3003) are running.
+
+---
+Task ID: 2
+Agent: orchestrator
+Task: Augment Oryx into an AI Mobility Intelligence Network — add connector ecosystem, personal AI teams, calendar intelligence, driver AI + reputation economy, vehicle-agnostic marketplace, continuous optimization, and the intelligence flywheel.
+
+Work Log:
+- Expanded types.ts with intelligence-network types: IntelligenceConnector, KnowledgeGraphNode, TeamAgent (7 roles), CalendarSuggestion, VehicleOption (9 types), DriverProfile, ContinuousOptEvent, CommunityIntel.
+- Expanded mock-data.ts: 12 connectors (mapping/ride-hail/weather/events/calendar/transit/driver/rider), 8 knowledge-graph nodes, 7-member AI team with live activities + metrics + contribution %, 3 calendar suggestions (GH₵ schedule shifts), 9 vehicle options (moto→AV), 4 driver profiles with reputation + earnings goals + Mobility Champions, 6 continuous-optimization events (before/during/after), community intel stats.
+- Extended Zustand store: selectedVehicle, continuousMonitoring flags.
+- Built IntelligenceNetwork component — "OS for mobility intelligence" hero: Network IQ gauge (87), connector stream (live status + latency), Unified Reasoning Engine, Knowledge Graph (8 node types with counts), Community Intelligence stats (2.8M trips, 18.4k routes, 9.2k pools).
+- Built MobilityTeam component — 7 specialized AI agents (Savings/Pooling/Calendar/Safety/Time/Market/Learning) with live status, activity feeds, metrics, contribution bars, shared-memory banner.
+- Built CalendarIntelligence — schedule-shift savings (3:00 PM → 4:00 PM saves GH₵23) with private badge.
+- Built DriverIntelligence — Driver AI teams (goal hit −3.2h, empty miles −41%, rider fare −18%) + Reputation Economy + Mobility Champions (Grace Adjei rep 94, etc.) with earnings-goal progress bars.
+- Built VehicleMarketplace — 9 vehicle types (motorcycle, e-scooter, tuk-tuk, sedan, SUV, van, minibus, electric, autonomous) with capacity/ETA/CO2/availability, AI pick badge.
+- Built ContinuousOptimization — before/during/after timeline (scan→switch→alert→learn) with monitoring toggle.
+- Upgraded FlywheelViz to the intelligence version (7 nodes: more riders/drivers → richer data → smarter AI → better matches → lower empty miles → lower fares → word spreads → self-reinforcing).
+- Rewired sheet-content: 6 tabs (Auction/Compare/Routes/Team/Network/Savings). Half-view now includes VehicleMarketplace + CalendarIntelligence. Auction tab includes ContinuousOptimization below. Network tab includes IntelligenceNetwork + DriverIntelligence.
+- Added post-booking "AI still watching this ride — will auto-switch if a cheaper equivalent appears" banner in AuctionPanel booked state.
+
+Self-Verification (Agent Browser + VLM):
+- Fixed default-vs-named import error (VehicleMarketplace/CalendarIntelligence are named exports).
+- Half view: Vehicle-Agnostic Marketplace (9 vehicles, AI pick on Sedan) + Calendar Intelligence (3 GH₵ schedule shifts) render.
+- Team tab: 7 agents with live statuses (Savings active 38%, Pooling thinking 22%, Calendar active 14%, Safety idle, etc.), activities, metrics, contribution bars.
+- Network tab: Network IQ 87, 12 connectors with live status + latency (Google Maps 120ms, Yango syncing 410ms, etc.), Unified Reasoning Engine, Knowledge Graph (Riders 18.4k, Vehicles 3.5k, Price points 28.6k), Community Intelligence (2.8M trips analyzed), Driver Reputation Economy with Mobility Champions (Grace Adjei rep 94, Ama Boateng rep 91, earnings goals).
+- Savings tab: enhanced intelligence flywheel (7 nodes self-reinforcing) + leaderboard.
+- Auction → Book → "Ride secured" + cyan "AI still watching this ride" continuous-monitoring banner + Continuous Optimization timeline.
+- Lint clean, no runtime errors, both services (3000 + 3003) running.
+
+Stage Summary:
+- Oryx is now an AI Mobility Intelligence Network, not just a marketplace. The intelligence layer is fully visible: connector ecosystem → unified reasoning engine → knowledge graph → 7-agent personal team → driver AI + reputation economy → vehicle-agnostic marketplace → continuous optimization → self-reinforcing intelligence flywheel. All browser-verified end-to-end.

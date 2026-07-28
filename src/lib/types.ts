@@ -174,3 +174,130 @@ export interface Destination {
   category: "recent" | "saved" | "suggested" | "event";
   emoji: string;
 }
+
+// ===========================================================================
+// AI Mobility Intelligence Network — augmentation types
+// ===========================================================================
+
+export type ConnectorCategory =
+  | "mapping"
+  | "ride-hail"
+  | "weather"
+  | "events"
+  | "calendar"
+  | "transit"
+  | "driver"
+  | "rider";
+
+export interface IntelligenceConnector {
+  id: string;
+  name: string;
+  category: ConnectorCategory;
+  emoji: string;
+  status: "live" | "syncing" | "connected";
+  signals: string[]; // what it streams
+  latencyMs: number;
+  color: string;
+}
+
+export interface KnowledgeGraphNode {
+  id: string;
+  label: string;
+  type: "rider" | "driver" | "vehicle" | "road" | "neighborhood" | "event" | "weather" | "price";
+  count: number;
+  color: string;
+}
+
+export type TeamRole =
+  | "savings"
+  | "pooling"
+  | "calendar"
+  | "safety"
+  | "time"
+  | "market"
+  | "learning";
+
+export interface TeamAgent {
+  id: TeamRole;
+  name: string;
+  role: string;
+  emoji: string;
+  color: string;
+  status: "active" | "thinking" | "idle";
+  activity: string; // current live action
+  metrics: { label: string; value: string }[];
+  contribution: number; // % of total savings attributable
+}
+
+export interface CalendarSuggestion {
+  id: string;
+  event: string;
+  originalTime: string;
+  suggestedTime: string;
+  originalCost: number;
+  suggestedCost: number;
+  saving: number;
+  reason: string;
+  confidence: number;
+}
+
+export type VehicleType =
+  | "moto"
+  | "scooter"
+  | "tuktuk"
+  | "sedan"
+  | "suv"
+  | "van"
+  | "minibus"
+  | "bus"
+  | "ev"
+  | "av";
+
+export interface VehicleOption {
+  id: VehicleType;
+  name: string;
+  emoji: string;
+  capacity: number;
+  basePrice: number;
+  bestFor: string;
+  eta: number;
+  available: number;
+  co2: "low" | "medium" | "high";
+  recommended?: boolean;
+}
+
+export interface DriverProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  vehicle: string;
+  vehicleType: VehicleType;
+  rating: number;
+  reputation: number; // 0-100
+  earningsGoal: { weekly: number; progress: number };
+  efficiency: number; // empty-mile reduction %
+  savingsGenerated: number; // for riders
+  pooledTrips: number;
+  punctuality: number;
+  champion?: boolean;
+  zone: string;
+}
+
+export interface ContinuousOptEvent {
+  id: string;
+  phase: "before" | "during" | "after";
+  time: string;
+  title: string;
+  detail: string;
+  saving?: number;
+  type: "scan" | "switch" | "learn" | "alert";
+}
+
+export interface CommunityIntel {
+  tripsAnalyzed: number;
+  routesLearned: number;
+  poolsDiscovered: number;
+  demandPatterns: number;
+  activeConnectors: number;
+  networkIq: number; // 0-100 collective intelligence score
+}

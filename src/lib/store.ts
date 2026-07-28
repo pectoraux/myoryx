@@ -67,6 +67,14 @@ interface OryxStore {
   // Live auction active (WS-driven) — suppresses merge offers etc.
   liveAuctionActive: boolean;
   setLiveAuctionActive: (v: boolean) => void;
+
+  // Intelligence network — selected vehicle type
+  selectedVehicle: import("./types").VehicleType;
+  setSelectedVehicle: (v: import("./types").VehicleType) => void;
+
+  // Continuous optimization — post-booking monitoring
+  continuousMonitoring: boolean;
+  setContinuousMonitoring: (v: boolean) => void;
 }
 
 const emptyAuction: AuctionState = {
@@ -304,4 +312,10 @@ export const useOryx = create<OryxStore>((set, get) => ({
 
   liveAuctionActive: false,
   setLiveAuctionActive: (v) => set({ liveAuctionActive: v }),
+
+  selectedVehicle: "sedan",
+  setSelectedVehicle: (v) => set({ selectedVehicle: v }),
+
+  continuousMonitoring: true,
+  setContinuousMonitoring: (v) => set({ continuousMonitoring: v }),
 }));
