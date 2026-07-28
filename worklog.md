@@ -207,3 +207,27 @@ Work Log:
 
 Stage Summary:
 - Oryx is a complete Autonomous Mobility Operating System with auth, waitlist, admin approval, demo multi-type login, real optimization engine, and all Mobility OS surfaces. Ready for GitHub + Vercel deployment.
+
+---
+Task ID: 4-deploy
+Agent: orchestrator
+Task: Deploy Oryx to GitHub + Vercel (myoryx.vercel.app) with Neon Postgres, full auth working on production.
+
+Work Log:
+- Created .gitignore excluding .env (secrets), dev.log, screenshots, sandbox artifacts. Verified NO secrets in git history.
+- Committed all code (Oryx Autonomous Mobility OS). Pushed to GitHub repo pectoraux/myoryx (created via API with PAT).
+- Created Vercel project "myoryx" (prj_PWkjc9NhzA9sIUNhgoCYZ4NDtFMt) linked to GitHub repo, framework nextjs, buildCommand "next build", installCommand "bun install".
+- Set 5 env vars on Vercel (all targets): DATABASE_URL (Neon pooled), DIRECT_URL (Neon direct), NEXTAUTH_SECRET, NEXTAUTH_URL=https://myoryx.vercel.app, NEXT_PUBLIC_AUCTION_WS=false (Vercel uses local auction sim — identical UX, no WS needed).
+- Triggered production deployment from Git ref main → dpl_B7UuX3m23QTa7rJGg94Yq12LB3sD → READY in ~45s.
+- Vercel aliases: myoryx.vercel.app (primary, the requested domain), myoryx-tay-nurs-projects.vercel.app, myoryx-git-main-tay-nurs-projects.vercel.app.
+- Production verification (curl):
+  - GET https://myoryx.vercel.app → HTTP 200, correct title.
+  - GET /api/seed → 200, Neon connected, accounts seeded.
+  - GET /api/auth/providers → credentials provider configured with correct callback URL.
+  - Full login flow: CSRF → POST /api/auth/callback/credentials → session cookie → GET /api/auth/session returns demo@oryx.app (rider, isDemo, all 7 types).
+  - Admin login: ekontetevi@gmail → session isAdmin=True, currentType=admin.
+  - GET /api/waitlist (admin) → counts {total:4, active:4, waitlist:0} from Neon.
+- WebSocket mini-service (port 3003) runs only in the sandbox; on Vercel, NEXT_PUBLIC_AUCTION_WS=false makes the client use the local auction simulation (identical live-auction UX with falling prices + bid feed).
+
+Stage Summary:
+- Oryx is LIVE at https://myoryx.vercel.app. GitHub: https://github.com/pectoraux/myoryx. Neon Postgres connected. NextAuth (credentials + waitlist + admin approval + demo multi-type quick-login) fully functional on production. The app behaves identically on Vercel as on the sandbox (WS auction replaced by local sim with the same UX).
