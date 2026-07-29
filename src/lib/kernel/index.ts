@@ -9,6 +9,7 @@ import { plugins } from "./plugins";
 import { aiRuntime, seedAgents } from "./ai-runtime";
 import { planningEngine, seedPlanningEngine } from "./planning-engine";
 import { sagas, seedSagas } from "./sagas";
+import { driverOS, seedDrivers } from "./driver-os";
 import {
   featureFlags,
   generateId,
@@ -76,6 +77,9 @@ export function initKernel(): void {
 
   // 7. Sagas (long-running workflows)
   seedSagas();
+
+  // 7b. Driver Operating System (M14-M15)
+  seedDrivers();
 
   // 8. Background jobs — register handlers
   jobs.register("intent.optimize", async (job) => {
@@ -152,3 +156,6 @@ export {
   optimizeParcelRoute,
   routeDistanceKm,
 } from "./engines";
+
+// Driver Operating System (M14-M15)
+export { driverOS, seedDrivers } from "./driver-os";

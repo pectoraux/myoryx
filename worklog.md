@@ -598,3 +598,107 @@ Verification (Vercel production):
 
 Stage Summary:
 - All 8 production optimization engines are live with real algorithms. The Speed Agent and Savings Agent produce measurably different solutions. Live at https://myoryx.vercel.app.
+
+---
+Task ID: 11-driver-ui
+Agent: driver-ui
+Task: Build the Driver Operating System UI for Oryx (M14–M15) — `src/components/kernel/driver-dashboard.tsx` (driver tab content: profile, coverage, stats, AI schedule, goals, ride history, reviews, preferences editor, return ride broadcasting) and `src/components/kernel/driver-marketplace.tsx` (Personal Driver Marketplace: browse, filter, compare, apply with 5-factor compatibility scoring). Only these two files may be touched.
+
+Work Log:
+- Read the worklog (Tasks 0–10) and `src/lib/kernel/driver-os.ts` to understand the Driver OS backend: 4 seeded driver profiles (dos-1 Kofi Mensah, dos-2 Grace Adjei, dos-3 Ama Boateng, dos-4 Daniel Quaye) with reputation, stats, ride history, reviews, coverage zones+map, subscription packages (6 total: School Run, Airport Express, Corporate Executive, Family Transport, Parcel Route, Medical Appointments), AI schedule builder, return ride broadcasting, and the 5-factor compatibility scoring algorithm (Schedule overlap 25% / Time window 20% / Route coverage 25% / Driver reputation 15% / Availability 15%).
+- Verified API shapes via curl: `GET /api/kernel/drivers?id=dos-1` returns the full DriverOSProfile (champion flag, reputation 96, working hours, preferred neighborhoods, 15 ride-history entries, 5 reviews, 2 subscription packages); `GET /api/kernel/drivers/marketplace` returns 6 packages flattened with driver info; `GET /api/kernel/drivers/schedule?driverId=dos-1` returns ~12 stops with chained/return/pool/parcel/subscription types and `aiOptimized: true`; `POST scoreCompatibility` returns `{score: 89, factors: [...]}` with the 5 weighted factors; `POST apply` returns the DriverApplication with compatibilityScore + compatibilityFactors embedded. Also confirmed `POST broadcastReturn`, `POST updatePreferences`, and `POST applications {applicationId, approved}` all return 200.
+- Read `mobility-team.tsx` and `mobility-planning-engine.tsx` for the design language reference: opaque dark cards (`bg-card/60`, `bg-background/40`), `border-border/50`, `ring-1` accents, framer-motion `opacity+y` staggered entrances, `layoutId` sliding tab indicators, hoisted module-scope sub-components, sonner toasts, lucide-react icons, `tabular-nums` everywhere, custom `scroll-thin` styling.
+
+- CREATED `src/components/kernel/driver-dashboard.tsx` (~2170 lines) — `"use client"`. All sub-components hoisted to module scope. Structure (tabbed layout to fit the bottom sheet):
+
+  **Header**
+  - Violet pill "Driver OS" + headline + live indicator (drivers count, pulsing dot).
+  - `DriverSelector`: dropdown showing avatar (champion crown overlay) + name + vehicle + star rating + status badge; opens a listbox of all 4 drivers with active highlight + check icon.
+
+  **Driver header banner**
+  - Larger avatar (champion crown), name, status badge, vehicle, star rating, reputation shield, savings generated (emerald), coverage zone chips + working hours + package count chips.
+
+  **Tab bar** (sticky top with backdrop blur): Overview / Schedule / History / Settings with framer-motion `layoutId="dash-tab-active"` sliding indicator and per-tab count badges.
+
+  **Tab: Overview**
+  - `OverviewCards`: 4 stat cards — Weekly Progress (circular progress + GH₵ earned/goal), Reputation (champion crown OR circular gauge colored by rep tier), Utilization % (circular gauge, cyan), Punctuality % (circular gauge, violet). Each card has icon, value, sub-text, and accent color.
+  - `EarningsGoals`: weekly + monthly progress bars with `fmtCedis`/`fmtCedisExact` formats; weekly shows "GH₵X to go" in amber OR "Goal achieved! 🎉" in emerald when 100%.
+  - `CoverageMapPanel`: pseudo-map with normalized lat/lng → positioned coverage circles (color/dash by demand level: high=rose, medium=amber, low=zinc), pulsing demand dots, zone labels, legend; chips below show zone + demand color + avg fare.
+  - `ApplicationsTracker` (only if pending apps exist): scrollable list of pending subscription applications with rider avatar, name, applied-at, compatibility score, optional notes, Approve/Reject buttons.
+
+  **Tab: Schedule**
+  - `ScheduleTimeline`: AI-built schedule with summary bar (4 pips: stops / projected earnings / hours / utilization), vertical timeline with type-colored stop dots (ride=emerald, pool=cyan, parcel=orange, subscription=violet, return=amber, break=zinc), each `StopCard` shows time badge + title + type chip + origin→destination + duration/rider/chained hint + fare; chained stops show a dashed emerald connector; footer note shows empty-miles % + chained-stop count; "Rebuild" button re-fetches.
+  - EarningsGoals repeated below for context.
+
+  **Tab: History**
+  - `RideHistoryList`: scrollable (max-h-64, scroll-thin), sorted by date desc; each `RideRow` shows type icon, rider, type chip, "Cancelled" badge if cancelled, origin→destination, date/duration/distance/star rating, fare (emerald, strikethrough rose if cancelled).
+  - `ReviewsList`: scrollable (max-h-72); each `ReviewCard` shows rider avatar, name, time-ago, star rating + numeric, comment, tag chips.
+
+  **Tab: Settings**
+  - `PreferencesEditor` (keyed by `driver.id` so it remounts cleanly on driver switch): weekly goal (number input), monthly goal (number input), preferred neighborhoods (12-chip multi-select), working hours (time start/end + day-of-week toggles S M T W T F S), preferred ride types (5 chips with icons: ride/pool/parcel/subscription/return), max hours/day slider (4–14h). "Save preferences" button → POST updatePreferences.
+  - `ReturnRideBroadcastForm` (keyed by `driver.id`): origin/destination selects, depart-in-min/seats/price inputs, live preview of "Rider pays ~60% (after ~40% discount)" line, "Broadcast to riders" button → POST broadcastReturn + toast.
+  - ApplicationsTracker (only if pending apps).
+
+  **Technical notes**
+  - "use client"; all sub-components hoisted to module scope (satisfies `react-hooks/static-components`).
+  - One 8s poll loop fetches driver profile + applications to keep stats fresh.
+  - `useEffect` only used for fetchers; resync of form state on driver/package change handled via `key={driver.id}` / `key={pkg.id}` remounts (no `setState` in effect → satisfies `react-hooks/set-state-in-effect`).
+  - All API requests use relative paths only — no absolute URLs, no ports.
+  - framer-motion: `opacity+y` staggered entrances on cards; `layoutId="dash-tab-active"` sliding tab indicator; `AnimatePresence` on tab content + driver menu + applications tracker.
+  - Color system: emerald (success/apply/goals), amber (champion/broadcast), violet (subscriptions/driver identity), cyan (schedule/utilization), rose (high demand/cancelled/rejected), orange (parcel/low-conf), zinc (idle/break). No indigo or blue.
+  - Dark-theme-native: opaque cards (`bg-card/60`, `bg-card/70`, `bg-background/40`), border-border/50, ring-1 accents.
+  - lucide-react: 30+ icons used.
+  - `tabular-nums` on every metric. `fmtCedis`, `fmtCedisExact`, `fmtAgoTs`, `fmtDate`, `fmtDays`, `reputationColor`, `scoreColor` helpers at module scope.
+
+- CREATED `src/components/kernel/driver-marketplace.tsx` (~1700 lines) — `"use client"`. All sub-components hoisted to module scope. Structure:
+
+  **Header**
+  - Emerald pill "Personal Driver Marketplace" + headline + live indicator (total packages, pulsing dot).
+  - `ApplicationsTracker` (rider-side) shown at top if rider has applied: scrollable list of submitted applications with package name, driver name, applied-at, compatibility score bar (color-coded), and status badge (pending=amber pulse, approved=emerald, rejected=rose).
+
+  **Filter bar** — `FilterBar`:
+  - Search input (specialty text), min-rating select (Any/4.5+/4.7+/4.8+/4.9+), zone chips (12 zones: East Legon, Airport, Octagon, Osu, Labadi, Spintex, Tema, Madina, Circle, Cantonments, Ridge, AIS Legon), max-price slider (GH₵50–500+). Updates the fetch query string.
+  - Result count ("X of Y packages") + Clear-filters button when any filter is active.
+
+  **Package grid** — `PackageCard`:
+  - 1/2/3 col responsive. Each card shows driver avatar (champion crown overlay), driver name, vehicle + rating, weekly price (large emerald), package name + specialty, top-3 feature chips with "+N" overflow, coverage box (days/time-window/trips-per-week/zones), capacity bar (rose if ≤3 slots open), rating badge, min commitment weeks, "Details" + "Match" buttons.
+
+  **Package detail panel** (slide-over, 480px desktop / full-screen mobile)
+  - Header: avatar (champion crown), package name + specialty, driver name + rating + reputation, close button.
+  - Body: 3-stat grid (weekly price / open slots / commitment); Coverage section (days, time window, trips/week, zones); Features chips; Driver profile section (3-stat mini grid + vehicle + zones); "Your commute (preview)" form (day toggles + time + origin + destination selects).
+  - Sticky bottom: "Check match" + "Apply" buttons.
+
+  **Compatibility Checker (FLAGSHIP)** — `CompatibilityChecker` modal:
+  - Bottom-sheet on mobile, centered on desktop. Header: "Compatibility checker" + package name + driver name.
+  - Form: commute day toggles (S M T W T F S), time input, origin/destination selects.
+  - "Check compatibility" button → POST scoreCompatibility.
+  - Results: large 120px circular `ScoreGauge` (color-coded: green ≥80, amber ≥60, rose <60) + score label ("Excellent match", "Strong match", etc.) + "Based on 5 weighted factors".
+  - Factor breakdown: 5 cards, each with factor icon, factor name, score number, animated score bar, and detail text — Schedule overlap (Calendar), Time window (Clock), Route coverage (Route), Driver reputation (ShieldCheck), Availability (Users).
+  - "Apply with X/100 score" button → POST apply (uses the same rider calendar).
+  - Auto-runs the scoring on mount (parent passes `key={pkg.id}` so it re-fires per package).
+
+  **Application confirmation modal** — `ApplicationConfirmation`:
+  - Party-popper icon (spring-animated with rotation), "Application submitted!" headline, driver name, score badge + status badge, Done button.
+
+  **Applications tracker (rider-side)** — `ApplicationsTracker`:
+  - Shows rider's submitted applications with package name, driver, applied-at, compatibility score bar (color-coded by score), and status badge.
+
+  **Technical notes**
+  - "use client"; all sub-components hoisted to module scope.
+  - Filter changes trigger re-fetch via useEffect (debounced naturally by React's batching).
+  - All API requests use relative paths only.
+  - framer-motion: `opacity+y` staggered entrances on grid + factor cards; `layoutId` not needed here (no tabs); `AnimatePresence` on detail panel + compatibility checker + confirmation modal + grid.
+  - Color system matches the dashboard (emerald/amber/violet/cyan/rose) — emerald for apply, amber for champion, violet for subscriptions, cyan for time-window, rose for high-demand/rejected.
+  - lucide-react icons throughout.
+  - `tabular-nums` on every metric. `fmtCedis`, `fmtCedisExact`, `fmtAgoTs`, `fmtDays`, `scoreColor`, `scoreLabel`, `factorIcon` helpers at module scope.
+
+Verification:
+- `cd /home/z/my-project && bun run lint` → exit 0, NO errors, NO warnings. (No `react-hooks/static-components`, `react-hooks/set-state-in-effect`, or `react-hooks/exhaustive-deps` issues — all sub-components hoisted; resync handled via `key` remounts; the single mount-only auto-score `useEffect` has no setState in its body, only an async callback.)
+- `npx tsc --noEmit -p tsconfig.json` filtered to `driver-dashboard` / `driver-marketplace` → no errors in my files (initial `subscriptionPackages` field omission on the local `DriverOSProfile` mirror type was caught and fixed). Pre-existing errors in `engines.ts`, `ai-runtime.ts`, `driver-os.ts`, `next.config.ts`, etc. are unrelated to my changes.
+- `tail -25 /home/z/my-project/dev.log` → `GET /api/kernel/drivers 200`, `GET /api/kernel/drivers?id=dos-1 200`, `GET /api/kernel/drivers/marketplace 200`, `GET /api/kernel/drivers/schedule?driverId=dos-1 200`, `GET /api/kernel/drivers/applications 200`, `POST /api/kernel/drivers 200`, `POST /api/kernel/drivers/marketplace 200` — all endpoints healthy. The pre-existing `prisma:error` and `seedDrivers()` transient 500 from before my changes are unrelated (the kernel re-init pattern is documented in earlier worklog entries).
+- Verified live API responses match my types exactly via curl (drivers list, single driver, schedule, marketplace, scoreCompatibility returning 89/100 with 5 factors, apply returning the DriverApplication with embedded compatibilityScore).
+- Did NOT run `bun run build` per instructions.
+- Did NOT touch any other file (no sheet-content wiring, no API route changes, no store/types changes, no `personal-drivers-hub.tsx` changes).
+
+Stage Summary:
+The Driver Operating System UI is now a complete, production-grade surface for Oryx's M14–M15 driver experience. The `driver-dashboard.tsx` component gives drivers a tabbed dashboard — Overview (4 stat cards + earnings goals + visual coverage map + applications tracker), Schedule (AI-built daily timeline with chained stops + utilization/empty-miles summary + Rebuild), History (ride history + reviews, both scrollable), and Settings (preferences editor + return ride broadcasting + applications tracker). The `driver-marketplace.tsx` component gives riders a marketplace to browse 6 subscription packages, filter by zone/specialty/rating/price, view full package + driver details in a slide-over, run the flagship 5-factor compatibility checker (large circular gauge + animated per-factor breakdown with detail text), and apply with one tap — followed by an animated confirmation modal and a live applications tracker showing each application's score and status. Both components use the established design language (dark theme, opaque cards, emerald/amber/violet/cyan/rose accents, framer-motion entrance animations, lucide-react icons, tabular-nums, custom scrollbar). Lint clean, TypeScript clean, dev server healthy.

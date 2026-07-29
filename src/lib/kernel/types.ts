@@ -575,3 +575,192 @@ export interface FeatureFlagState {
   rolloutPct: number;
   description: string;
 }
+
+// ===========================================================================
+// Driver Operating System (M14-M15)
+// ===========================================================================
+
+export interface DriverOSProfile {
+  id: string;
+  userId: string;
+  name: string;
+  avatar: string;
+  vehicle: string;
+  vehicleType: string;
+  rating: number;
+  reputation: number; // 0-100
+  // coverage
+  coverageZones: string[];
+  coverageMap: CoverageArea[];
+  // statistics
+  stats: DriverStats;
+  // ride history
+  rideHistory: RideHistoryEntry[];
+  // reviews
+  reviews: DriverReview[];
+  // earnings goals
+  weeklyGoal: number;
+  monthlyGoal: number;
+  weeklyProgress: number;
+  // preferences
+  preferredNeighborhoods: string[];
+  workingHours: { start: string; end: string; days: number[] };
+  preferredRideTypes: string[];
+  preferredVehicle: string;
+  maxWorkingHoursPerDay: number;
+  // subscription
+  subscriptionPackages: SubscriptionPackage[];
+  // calendar sync
+  calendarSync: boolean;
+  minPreNoticeHours: number;
+  // reputation economy
+  champion: boolean;
+  savingsGenerated: number;
+  pooledTrips: number;
+  punctuality: number;
+  efficiency: number; // empty-mile reduction %
+  status: "available" | "busy" | "offline";
+  createdAt: number;
+}
+
+export interface CoverageArea {
+  zone: string;
+  lat: number;
+  lng: number;
+  radiusKm: number;
+  demand: "low" | "medium" | "high";
+  avgFare: number;
+}
+
+export interface DriverStats {
+  totalRides: number;
+  completedRides: number;
+  cancelledRides: number;
+  acceptanceRate: number;
+  totalEarnings: number;
+  avgEarningsPerRide: number;
+  avgRating: number;
+  totalKm: number;
+  emptyKm: number;
+  utilizationPct: number;
+  hoursWorkedThisWeek: number;
+  ridesThisWeek: number;
+  earningsThisWeek: number;
+}
+
+export interface RideHistoryEntry {
+  id: string;
+  date: string;
+  rider: string;
+  origin: string;
+  destination: string;
+  fare: number;
+  durationMin: number;
+  distanceKm: number;
+  rating: number;
+  type: "ride" | "pool" | "parcel" | "subscription" | "return";
+  status: "completed" | "cancelled";
+}
+
+export interface DriverReview {
+  id: string;
+  riderName: string;
+  riderAvatar: string;
+  rating: number;
+  comment: string;
+  date: string;
+  tags: string[];
+}
+
+export interface SubscriptionPackage {
+  id: string;
+  driverId: string;
+  name: string;
+  specialty: string;
+  weeklyPrice: number;
+  features: string[];
+  // what the subscription covers
+  coverage: {
+    days: number[];
+    timeWindow: string;
+    tripsPerWeek: number;
+    zones: string[];
+  };
+  subscribers: number;
+  maxSubscribers: number;
+  rating: number;
+  minCommitmentWeeks: number;
+}
+
+export interface DriverApplication {
+  id: string;
+  riderId: string;
+  riderName: string;
+  driverId: string;
+  packageId: string;
+  status: "pending" | "approved" | "rejected";
+  // compatibility score (computed by the matching engine)
+  compatibilityScore: number;
+  compatibilityFactors: CompatibilityFactor[];
+  appliedAt: number;
+  reviewedAt?: number;
+  notes?: string;
+}
+
+export interface CompatibilityFactor {
+  factor: string;
+  score: number; // 0-100
+  detail: string;
+}
+
+// M15 — Driver Scheduling
+
+export interface DriverSchedule {
+  id: string;
+  driverId: string;
+  date: string;
+  stops: ScheduleStop[];
+  projectedEarnings: number;
+  projectedHours: number;
+  utilizationPct: number;
+  emptyMilesPct: number;
+  aiOptimized: boolean;
+}
+
+export interface ScheduleStop {
+  id: string;
+  time: string;
+  type: "ride" | "pool" | "parcel" | "subscription" | "return" | "break";
+  title: string;
+  origin: string;
+  destination: string;
+  fare: number;
+  durationMin: number;
+  // chain: this stop flows into the next
+  chainsToNext: boolean;
+  riderName?: string;
+}
+
+export interface ReturnRideBroadcast {
+  id: string;
+  driverId: string;
+  driverName: string;
+  origin: string;
+  destination: string;
+  departInMin: number;
+  seats: number;
+  price: number;
+  vehicle: string;
+  rating: number;
+  discountPct: number;
+}
+
+export interface DriverPreferences {
+  weeklyGoal: number;
+  monthlyGoal: number;
+  preferredNeighborhoods: string[];
+  workingHours: { start: string; end: string; days: number[] };
+  preferredRideTypes: string[];
+  preferredVehicle: string;
+  maxWorkingHoursPerDay: number;
+}
