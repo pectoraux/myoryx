@@ -292,3 +292,32 @@ Verification:
 
 Stage Summary:
 The Mobility Kernel UI is now the heart of Oryx. The Calendar tab surfaces the Planning Engine — every calendar event becomes a Mobility Intent the AI continuously optimizes for shifts, pools, return rides, subscriptions, multi-modal routes, and batches. The Drivers tab combines personal drivers, commute communities, return rides, and a full AI-built day timeline. The Settings hub unifies all user controls in one place, including the cloud-IDE Developer Console for building, hot-reloading, validating, simulating, replaying, and submitting extensions. The kernel status pill on the header makes the kernel's liveness visible at all times. All kernel API routes are wired (graph, connectors, intents, calendar, agents, plugins, events, flags, dev-console). Lint clean. Dev server compiles cleanly. Worklog recorded in /agent-ctx/6-kernel-ui-kernel-ui.md.
+
+---
+Task ID: 6-kernel
+Agent: orchestrator
+Task: Build the Mobility Kernel (M1-M5) — event-driven architecture around mobility intents, Knowledge Graph, Connector Framework, Plugin Runtime, AI Runtime, Planning Engine, Developer Console. Deploy to Vercel.
+
+Work Log:
+- Architectural pivot: Oryx is now event-driven around mobility INTENTS, not rides. The calendar is the Mobility Planning Engine — every event becomes an intent the AI optimizes.
+- Built src/lib/kernel/ (7 modules):
+  - types.ts: domain types (GraphNode, MobilityIntent, CalendarEvent, ConnectorManifest, ExtensionManifest, AgentDefinition, Command, DomainEvent, FeatureFlag)
+  - event-bus.ts: EventBus + CommandBus + FeatureFlags (idempotency ledger, event sourcing/replay, correlation ids)
+  - graph.ts: Knowledge Graph (19 nodes: 8 neighborhoods, 5 routes, 1 transit, 5 providers; typed edges; query/traverse/hops APIs)
+  - connectors.ts: Connector framework (6 live connectors: OSM, Weather, Events, Uber, Fleet, Transit; polling, health, rate limiting, retries)
+  - plugins.ts: Plugin runtime (manifests, permissions, lifecycle hooks, hot-reload, log stream, authorize)
+  - ai-runtime.ts: AI runtime (23 agents: 10 rider + 9 driver + 4 fleet; planning, memory, tools, policy, event subscriptions)
+  - planning-engine.ts: Planning Engine (calendar events → Mobility Intents → continuous optimization with 6 suggestion kinds: shift/pool/return/multimodal/subscription/batch)
+  - index.ts: initKernel() bootstrap
+- Built 9 API routes (/api/kernel/graph, connectors, intents, calendar, agents, plugins, events, flags, dev-console)
+- UI subagent built 5 components (mobility-planning-engine, developer-console, kernel-dashboard, settings-hub, personal-drivers-hub) + restructured sheet-content to 6 tabs (Search/Compare/Auction/Calendar/Drivers/Settings) + kernel status pill in header.
+- Fixed: generateId not exported from kernel index (Turbopack cache cleared, exported all helpers).
+- Verified end-to-end (Agent Browser + VLM):
+  - Planning Engine: 3 intents (Office commute, Sunday church, Airport trip) with 12 optimization suggestions (shift GH¢21, pool GH¢66, multimodal GH¢9, subscription GH¢22, each with confidence %).
+  - Developer Console: cloud-IDE workspace, created "My Pool Agent" extension, Test tab with Simulate ride + Replay events.
+  - Settings hub: 9 sections (Journey/Agents/Extensions/Profile/Savings/Network/Preferences/Privacy/Developer Console).
+- Lint clean, committed, pushed to GitHub, deployed to Vercel.
+- Vercel verified: HTTP 200, /api/kernel/graph (19 nodes), /api/kernel/connectors (6), /api/kernel/intents (3) all live on myoryx.vercel.app.
+
+Stage Summary:
+- The Mobility Kernel is the production-grade foundation. Every future milestone (routing, pooling, auctions, driver marketplace, parcel network) will build on this event-driven, intent-centric architecture. Live at https://myoryx.vercel.app.
