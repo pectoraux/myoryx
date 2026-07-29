@@ -343,11 +343,18 @@ export type HopMode =
   | "bike"
   | "moto"
   | "car"
+  | "suv"
+  | "van"
+  | "minibus"
+  | "bus"
+  | "ferry"
+  | "train"
   | "shuttle"
   | "transit"
   | "npd"
   | "taxi"
-  | "ride-hail";
+  | "ride-hail"
+  | "parcel";
 
 export interface JourneyHop {
   mode: HopMode;

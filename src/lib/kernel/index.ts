@@ -136,3 +136,19 @@ export {
   jobs,
   health,
 };
+
+// Optimization engines (M10-M13)
+export {
+  composeRoutes,
+  composeSplitJourney,
+  discoverCommutes,
+  discoverPools,
+  runReverseAuction,
+  runNegotiation,
+  checkRepricing,
+  findReturnRides,
+  speedAgentSolution,
+  savingsAgentSolution,
+  optimizeParcelRoute,
+  routeDistanceKm,
+} from "./engines";
