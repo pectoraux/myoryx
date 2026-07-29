@@ -764,3 +764,245 @@ export interface DriverPreferences {
   preferredVehicle: string;
   maxWorkingHoursPerDay: number;
 }
+
+// ===========================================================================
+// NPD, Fleet & Parcel Network (M16-M18)
+// ===========================================================================
+
+// --- NPD (Non-Playable Drivers) -----------------------------------------
+
+export interface NPDPublication {
+  id: string;
+  npdId: string;
+  npdName: string;
+  avatar: string;
+  // planned route
+  origin: string;
+  destination: string;
+  // schedule window
+  departAt: string; // ISO or HH:MM
+  departWindowMin: number; // flexibility
+  arriveBy?: string;
+  // capacity
+  seats: number;
+  seatsTaken: number;
+  price: number;
+  // vehicle
+  vehicle: string;
+  rating: number;
+  // return journey
+  returnJourney?: {
+    departAt: string;
+    seats: number;
+    price: number;
+  };
+  // recurring
+  recurring?: {
+    days: number[];
+    time: string;
+  };
+  // matching
+  routeWaypoints: string[];
+  matchPct: number;
+  status: "open" | "matched" | "closed";
+  createdAt: number;
+}
+
+// --- Fleet Connector Framework ------------------------------------------
+
+export interface FleetConnector {
+  id: string;
+  fleetName: string;
+  pluginId: string;
+  connected: boolean;
+  // capacity exposed through connector API
+  capacity: FleetCapacity[];
+  // metadata
+  vehicleCount: number;
+  utilizationPct: number;
+  zones: string[];
+  avgFare: number;
+  // connector health
+  lastSyncAt: number;
+  eventsProcessed: number;
+}
+
+export interface FleetCapacity {
+  vehicleId: string;
+  vehicleType: string;
+  currentZone: string;
+  available: boolean;
+  availableUntil?: string;
+  capacityKg: number;
+  seats: number;
+  etaMin: number;
+  heading?: string;
+}
+
+// --- Parcel Marketplace --------------------------------------------------
+
+export type ParcelSize = "small" | "medium" | "large" | "extra_large";
+export type ParcelUrgency = "standard" | "express" | "same_day" | "scheduled";
+export type ParcelStatus = "created" | "optimizing" | "auctioning" | "dispatched" | "in_transit" | "delivered" | "failed";
+export type ParcelType = "one_time" | "recurring" | "return_delivery" | "batched" | "subscription";
+
+export interface ParcelIntent {
+  id: string;
+  // origin (merchant or individual)
+  merchantId?: string;
+  merchantName?: string;
+  // route
+  pickup: string;
+  dropoff: string;
+  pickupLat?: number;
+  pickupLng?: number;
+  dropoffLat?: number;
+  dropoffLng?: number;
+  // parcel details
+  size: ParcelSize;
+  weightKg: number;
+  dimensions?: string;
+  // timing
+  urgency: ParcelUrgency;
+  deadline?: string;
+  scheduledFor?: string;
+  // type
+  type: ParcelType;
+  recurringSchedule?: { days: number[]; time: string };
+  // batching
+  batchId?: string;
+  batchedWith?: string[];
+  // pricing
+  maxBudget?: number;
+  quotedPrice: number;
+  finalPrice?: number;
+  // auction
+  auctionId?: string;
+  // courier
+  courier?: string;
+  courierRating?: number;
+  // status
+  status: ParcelStatus;
+  // tracking
+  trackingHistory: ParcelTrackingEvent[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ParcelTrackingEvent {
+  id: string;
+  status: ParcelStatus;
+  location: string;
+  timestamp: number;
+  note?: string;
+}
+
+export interface ParcelAuction {
+  id: string;
+  parcelId: string;
+  openingPrice: number;
+  currentBestPrice: number;
+  bids: ParcelBid[];
+  rounds: number;
+  status: "open" | "settled" | "expired";
+  winningBid?: ParcelBid;
+  settledAt?: number;
+}
+
+export interface ParcelBid {
+  id: string;
+  courierId: string;
+  courierName: string;
+  courierType: "fleet" | "npd" | "independent" | "drone";
+  courierRating: number;
+  price: number;
+  eta: number;
+  co2: number;
+  timestamp: number;
+}
+
+export interface ParcelBatch {
+  id: string;
+  parcelIds: string[];
+  courierId?: string;
+  totalWeight: number;
+  totalStops: number;
+  consolidatedRoute: string[];
+  soloTotalCost: number;
+  batchedCost: number;
+  saving: number;
+  status: "forming" | "ready" | "dispatched";
+}
+
+// --- Merchant Integration -----------------------------------------------
+
+export interface MerchantAccount {
+  id: string;
+  name: string;
+  type: "ecommerce" | "restaurant" | "pharmacy" | "grocery" | "retail" | "logistics";
+  apiKey: string;
+  webhookUrl?: string;
+  // subscription
+  subscription: "free" | "pro" | "enterprise";
+  // stats
+  totalOrders: number;
+  totalParcelsDelivered: number;
+  totalSpent: number;
+  avgDeliveryCost: number;
+  // recurring delivery settings
+  defaultServiceLevel: ParcelUrgency;
+  businessZones: string[];
+  connected: boolean;
+  createdAt: number;
+}
+
+export interface MerchantOrder {
+  id: string;
+  merchantId: string;
+  merchantName: string;
+  // order details
+  orderRef: string;
+  customerName: string;
+  customerPhone?: string;
+  // delivery
+  pickup: string;
+  dropoff: string;
+  size: ParcelSize;
+  weightKg: number;
+  urgency: ParcelUrgency;
+  deadline: string;
+  // pricing
+  deliveryFee: number;
+  // auto-generated parcel intent
+  parcelIntentId?: string;
+  status: "created" | "optimized" | "dispatched" | "delivered";
+  createdAt: string;
+}
+
+// --- Mixed Journey Composition -------------------------------------------
+
+export interface MixedJourney {
+  id: string;
+  hops: MixedJourneyHop[];
+  totalPrice: number;
+  totalDuration: number;
+  co2: number;
+  score: number;
+  badge?: string;
+  // which providers contributed
+  providers: string[];
+}
+
+export interface MixedJourneyHop {
+  mode: HopMode;
+  provider: string; // "NPD: Kwabena O." or "BRT Bus" or "Walk"
+  emoji: string;
+  label: string;
+  origin: string;
+  destination: string;
+  durationMin: number;
+  price: number;
+  co2: number;
+  seats?: number;
+  npdId?: string;
+}

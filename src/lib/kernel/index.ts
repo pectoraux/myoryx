@@ -10,6 +10,7 @@ import { aiRuntime, seedAgents } from "./ai-runtime";
 import { planningEngine, seedPlanningEngine } from "./planning-engine";
 import { sagas, seedSagas } from "./sagas";
 import { driverOS, seedDrivers } from "./driver-os";
+import { seedMarketplace } from "./marketplace";
 import {
   featureFlags,
   generateId,
@@ -80,6 +81,9 @@ export function initKernel(): void {
 
   // 7b. Driver Operating System (M14-M15)
   seedDrivers();
+
+  // 7c. Unified Marketplace (M16-M18): NPDs, Fleets, Parcels, Merchants
+  seedMarketplace();
 
   // 8. Background jobs — register handlers
   jobs.register("intent.optimize", async (job) => {
@@ -159,3 +163,13 @@ export {
 
 // Driver Operating System (M14-M15)
 export { driverOS, seedDrivers } from "./driver-os";
+
+// Unified Marketplace (M16-M18): NPDs, Fleets, Parcels, Merchants, Mixed Journeys
+export {
+  npdEngine,
+  fleetEngine,
+  parcelNetwork,
+  merchantEngine,
+  composeMixedJourney,
+  seedMarketplace,
+} from "./marketplace";
