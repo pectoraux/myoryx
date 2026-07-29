@@ -199,4 +199,147 @@ export function seedGraph(): void {
       updatedAt: Date.now(),
     });
   }
+
+  // --- Full entity coverage (spec: first-class domain models) -----------
+
+  // Businesses (merchants, employers, schools)
+  const businesses = [
+    { id: "b-octagon", label: "The Octagon", kind: "office", hood: "n-circle" },
+    { id: "b-ais", label: "AIS Legon", kind: "school", hood: "n-legon" },
+    { id: "b-mall", label: "Accra Mall", kind: "shopping", hood: "n-airport" },
+    { id: "b-airport", label: "Kotoka Airport", kind: "airport", hood: "n-airport" },
+    { id: "b-stadium", label: "Accra Sports Stadium", kind: "venue", hood: "n-circle" },
+  ];
+  for (const b of businesses) {
+    graph.upsert({
+      id: b.id,
+      type: "business",
+      label: b.label,
+      edges: { located_in: [b.hood] },
+      attrs: { kind: b.kind },
+      updatedAt: Date.now(),
+    });
+  }
+
+  // Riders
+  const riders = [
+    { id: "rd-1", name: "Kwame A.", hood: "n-east-legon" },
+    { id: "rd-2", name: "Ama O.", hood: "n-osu" },
+    { id: "rd-3", name: "Esi B.", hood: "n-spintex" },
+    { id: "rd-4", name: "Daniel M.", hood: "n-madina" },
+  ];
+  for (const r of riders) {
+    graph.upsert({
+      id: r.id,
+      type: "rider",
+      label: r.name,
+      edges: { lives_in: [r.hood], commutes_to: ["b-octagon"] },
+      attrs: { rides: 312, saved: 2841 },
+      updatedAt: Date.now(),
+    });
+  }
+
+  // Drivers (professional)
+  const drivers = [
+    { id: "dr-1", name: "Kofi Mensah", hood: "n-east-legon", provider: "p-uber" },
+    { id: "dr-2", name: "Grace Adjei", hood: "n-osu", provider: "p-bolt" },
+    { id: "dr-3", name: "Ibrahim S.", hood: "n-spintex", provider: "p-yango" },
+    { id: "dr-4", name: "Ama Boateng", hood: "n-airport", provider: "p-indrive" },
+  ];
+  for (const d of drivers) {
+    graph.upsert({
+      id: d.id,
+      type: "driver",
+      label: d.name,
+      edges: { operates_in: [d.hood], works_for: [d.provider] },
+      attrs: { rating: 4.8, reputation: 94, rides: 245 },
+      updatedAt: Date.now(),
+    });
+  }
+
+  // NPDs (non-playable drivers — ordinary vehicle owners)
+  const npds = [
+    { id: "npd-1", name: "Kwabena O.", hood: "n-east-legon", dest: "n-airport" },
+    { id: "npd-2", name: "Selina A.", hood: "n-madina", dest: "n-osu" },
+    { id: "npd-3", name: "David K.", hood: "n-legon", dest: "n-circle" },
+  ];
+  for (const n of npds) {
+    graph.upsert({
+      id: n.id,
+      type: "npd",
+      label: n.name,
+      edges: { based_in: [n.hood], traveling_to: [n.dest] },
+      attrs: { seats: 2, vehicle: "Toyota Camry" },
+      updatedAt: Date.now(),
+    });
+  }
+
+  // Fleets
+  const fleets = [
+    { id: "fl-1", name: "CityCab Dispatch", vehicles: 240, hood: "n-circle" },
+    { id: "fl-2", name: "GreenLine Shuttles", vehicles: 60, hood: "n-legon" },
+    { id: "fl-3", name: "ExpressCouriers", vehicles: 120, hood: "n-airport" },
+  ];
+  for (const f of fleets) {
+    graph.upsert({
+      id: f.id,
+      type: "fleet",
+      label: f.name,
+      edges: { operates_in: [f.hood], provides: ["p-taxi"] },
+      attrs: { vehicles: f.vehicles, utilization: 78 },
+      updatedAt: Date.now(),
+    });
+  }
+
+  // Vehicles
+  const vehicles = [
+    { id: "v-1", name: "Toyota Corolla", driver: "dr-1", type: "sedan" },
+    { id: "v-2", name: "Hyundai Kona EV", driver: "dr-2", type: "ev" },
+    { id: "v-3", name: "Toyota HiAce", driver: "dr-4", type: "van" },
+    { id: "v-4", name: "Yamaha Moto", driver: "dr-3", type: "moto" },
+  ];
+  for (const v of vehicles) {
+    graph.upsert({
+      id: v.id,
+      type: "vehicle",
+      label: v.name,
+      edges: { driven_by: [v.driver] },
+      attrs: { type: v.type, capacity: v.type === "van" ? 8 : v.type === "moto" ? 1 : 4 },
+      updatedAt: Date.now(),
+    });
+  }
+
+  // Parcels (active deliveries in the network)
+  const parcels = [
+    { id: "pa-1", from: "b-mall", to: "n-osu", size: "small" },
+    { id: "pa-2", from: "b-mall", to: "n-east-legon", size: "medium" },
+  ];
+  for (const p of parcels) {
+    graph.upsert({
+      id: p.id,
+      type: "parcel",
+      label: `Parcel ${p.id}`,
+      edges: { pickup_at: [p.from], deliver_to: [p.to] },
+      attrs: { size: p.size, status: "open" },
+      updatedAt: Date.now(),
+    });
+  }
+
+  // Connectors as graph nodes
+  const connectorNodes = [
+    { id: "c-osm", label: "OpenStreetMap", category: "maps" },
+    { id: "c-weather", label: "Weather Stream", category: "weather" },
+    { id: "c-uber", label: "Uber API", category: "ride_hail" },
+    { id: "c-fleet", label: "Fleet Dispatch", category: "fleet" },
+  ];
+  for (const c of connectorNodes) {
+    graph.upsert({
+      id: c.id,
+      type: "connector",
+      label: c.label,
+      edges: {},
+      attrs: { category: c.category, status: "live" },
+      updatedAt: Date.now(),
+    });
+  }
 }

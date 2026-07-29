@@ -132,7 +132,7 @@ class AIRuntime {
     return Array.from(this.agents.values());
   }
 
-  byTeam(team: "rider" | "driver" | "fleet"): AgentDefinition[] {
+  byTeam(team: "rider" | "driver" | "fleet" | "merchant"): AgentDefinition[] {
     return this.all().filter((a) => a.team === team);
   }
 }
@@ -176,9 +176,16 @@ export function seedAgents(): void {
     { id: "f-dispatch", role: "fleet_dispatch", name: "Fleet Dispatch", emoji: "📡", color: "#fb923c", description: "Dispatches vehicles in real-time", tools: ["dispatch"], subscribesTo: ["ride.booked"], policy: { canBook: true, canNegotiate: false } },
   ];
 
+  const merchantAgents: Array<Omit<AgentDefinition, "team">> = [
+    { id: "m-order", role: "merchant_order_optimizer", name: "Order Optimizer", emoji: "📦", color: "#fb923c", description: "Optimizes delivery orders", tools: ["batch_parcels", "rank_couriers"], subscribesTo: ["parcel.created", "connector.fleet.utilization"], policy: { canBook: true, canNegotiate: true } },
+    { id: "m-courier", role: "merchant_courier_selector", name: "Courier Selector", emoji: "🚚", color: "#fbbf24", description: "Selects cheapest reliable courier", tools: ["rank_couriers"], subscribesTo: ["parcel.optimized"], policy: { canBook: true, canNegotiate: false } },
+    { id: "m-billing", role: "merchant_billing", name: "Merchant Billing", emoji: "💳", color: "#a78bfa", description: "Aggregates weekly billing via PaySwap", tools: [], subscribesTo: ["parcel.dispatched"], policy: { canBook: false, canNegotiate: false } },
+  ];
+
   for (const a of riderAgents) aiRuntime.registerAgent({ ...a, team: "rider" });
   for (const a of driverAgents) aiRuntime.registerAgent({ ...a, team: "driver" });
   for (const a of fleetAgents) aiRuntime.registerAgent({ ...a, team: "fleet" });
+  for (const a of merchantAgents) aiRuntime.registerAgent({ ...a, team: "merchant" });
 
   // activate the default rider team
   aiRuntime.activate("a-savings");

@@ -45,10 +45,35 @@ class ConnectorRuntime {
   start(): void {
     this.health.status = "syncing";
     if (this.manifest.mode === "poll" && this.manifest.pollIntervalMs) {
+      // Polling: tick on interval
       this.timer = setInterval(() => this.tick(), this.manifest.pollIntervalMs);
+      this.tick();
+    } else if (this.manifest.mode === "stream") {
+      // Streaming: simulate a persistent connection with frequent ticks
+      this.timer = setInterval(() => this.tick(), 3000);
+      this.tick();
+    } else if (this.manifest.mode === "webhook") {
+      // Webhook: no polling; waits for external POST to /api/kernel/webhook/:id
+      // Mark as live immediately — external systems will push events
+      this.health.status = "live";
+      this.health.lastEventAt = Date.now();
     }
-    // first tick immediately
-    this.tick();
+  }
+
+  // External webhook ingestion — called by /api/kernel/webhook route
+  ingestWebhook(payload: Record<string, unknown>): void {
+    this.health.eventsIngested++;
+    this.health.lastEventAt = Date.now();
+    this.health.status = "live";
+    eventBus.publish([
+      createEvent(
+        `connector.${this.manifest.category}.webhook`,
+        generateId("cev"),
+        { connectorId: this.manifest.id, ...payload },
+        undefined,
+        undefined
+      ),
+    ]);
   }
 
   stop(): void {
@@ -114,6 +139,7 @@ class ConnectorRuntime {
 
 class ConnectorRegistry {
   private connectors = new Map<string, ConnectorInstance>();
+  private runtimes = new Map<string, ConnectorRuntime>();
 
   register(manifest: ConnectorManifest, ingestFn: IngestFn): ConnectorInstance {
     const rt = new ConnectorRuntime(manifest, ingestFn);
@@ -124,7 +150,16 @@ class ConnectorRegistry {
       stop: () => rt.stop(),
     };
     this.connectors.set(manifest.id, instance);
+    this.runtimes.set(manifest.id, rt);
     return instance;
+  }
+
+  // External webhook ingestion — for webhook-mode connectors
+  ingestWebhook(connectorId: string, payload: Record<string, unknown>): boolean {
+    const rt = this.runtimes.get(connectorId);
+    if (!rt) return false;
+    rt.ingestWebhook(payload);
+    return true;
   }
 
   start(id: string): void {

@@ -269,7 +269,11 @@ export type AgentRole =
   | "fleet_allocation"
   | "fleet_utilization"
   | "fleet_maintenance"
-  | "fleet_dispatch";
+  | "fleet_dispatch"
+  // merchant agents
+  | "merchant_order_optimizer"
+  | "merchant_courier_selector"
+  | "merchant_billing";
 
 export interface AgentDefinition {
   id: string;
@@ -277,7 +281,7 @@ export interface AgentDefinition {
   name: string;
   emoji: string;
   color: string;
-  team: "rider" | "driver" | "fleet";
+  team: "rider" | "driver" | "fleet" | "merchant";
   description: string;
   // tools this agent can invoke
   tools: string[];
