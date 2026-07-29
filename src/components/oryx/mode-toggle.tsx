@@ -4,8 +4,9 @@ import { useOryx } from "@/lib/store";
 import { Users, Package } from "lucide-react";
 
 /**
- * Compact People / Parcel pill toggle. Sliding indicator via framer-motion
- * layoutId. Emerald = people, orange = parcel. Fits the header.
+ * People / Parcel pill toggle. The active mode is highlighted green
+ * (emerald) regardless of which mode — consistent "selected = green"
+ * semantics. The inactive mode is a subtle ghost pill you tap to switch.
  */
 export default function ModeToggle() {
   const { mode, setMode } = useOryx();
@@ -15,19 +16,20 @@ export default function ModeToggle() {
     <div
       role="tablist"
       aria-label="Mobility mode"
-      className="glass relative flex items-center rounded-full border border-border/60 p-0.5 shadow-lg shadow-black/30"
+      className="relative flex items-center rounded-full border border-border/60 p-0.5 shadow-lg shadow-black/30"
+      style={{
+        background: "oklch(0.16 0.008 200 / 0.85)",
+        backdropFilter: "blur(16px) saturate(1.4)",
+        WebkitBackdropFilter: "blur(16px) saturate(1.4)",
+      }}
     >
-      {/* Sliding indicator */}
+      {/* Sliding green indicator — same green for both active states */}
       <motion.div
         layoutId="mode-toggle-indicator"
-        className="absolute inset-y-0.5 w-1/2 rounded-full"
+        className="absolute inset-y-0.5 w-1/2 rounded-full bg-emerald-500"
         style={{
-          backgroundColor: isPeople
-            ? "oklch(0.6 0.16 152 / 0.22)"
-            : "oklch(0.7 0.18 50 / 0.22)",
-          boxShadow: isPeople
-            ? "0 0 14px oklch(0.6 0.16 152 / 0.35)"
-            : "0 0 14px oklch(0.7 0.18 50 / 0.35)",
+          boxShadow: "0 0 16px oklch(0.72 0.17 158 / 0.5)",
+          left: isPeople ? "0.125rem" : "50%",
         }}
         transition={{ type: "spring", stiffness: 500, damping: 36 }}
       />
@@ -36,7 +38,9 @@ export default function ModeToggle() {
         aria-selected={isPeople}
         onClick={() => setMode("people")}
         className={`relative z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-bold transition ${
-          isPeople ? "text-emerald-300" : "text-muted-foreground hover:text-foreground"
+          isPeople
+            ? "text-emerald-950"
+            : "text-muted-foreground hover:text-foreground"
         }`}
       >
         <Users className="h-3.5 w-3.5" />
@@ -47,7 +51,9 @@ export default function ModeToggle() {
         aria-selected={!isPeople}
         onClick={() => setMode("parcel")}
         className={`relative z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-bold transition ${
-          !isPeople ? "text-orange-300" : "text-muted-foreground hover:text-foreground"
+          !isPeople
+            ? "text-emerald-950"
+            : "text-muted-foreground hover:text-foreground"
         }`}
       >
         <Package className="h-3.5 w-3.5" />

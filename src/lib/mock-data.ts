@@ -22,6 +22,8 @@ import type {
   MerchantOrder,
   FleetOperator,
   UserType,
+  MarketAgent,
+  AgentExtension,
 } from "./types";
 
 // Accra city center — matches user timezone Africa/Accra
@@ -987,4 +989,39 @@ export const USER_TYPES: { id: UserType; label: string; emoji: string; descripti
   { id: "courier", label: "Courier", emoji: "📦", description: "Deliver parcels & food" },
   { id: "npd", label: "NPD", emoji: "🚙", description: "Sell seats on your trips" },
   { id: "admin", label: "Admin", emoji: "⚙️", description: "Manage waitlist & network" },
+];
+
+// ===========================================================================
+// Mobility OS augmentation — agent marketplace, extensions, fleet plugins
+// ===========================================================================
+
+export const MARKET_AGENTS: MarketAgent[] = [
+  { id: "savings", name: "Savings Agent", emoji: "💰", category: "Cost", objective: "Minimize fare above all", color: "#4ade80", rating: 4.9, subscribers: 18420, avgSaving: "−24%", author: "Oryx", description: "Negotiates every bid, waits for off-peak, monitors post-booking for cheaper swaps." },
+  { id: "pooling", name: "Pooling Agent", emoji: "🧑‍🤝‍🧑", category: "Pooling", objective: "Find carpools before booking", color: "#a78bfa", rating: 4.8, subscribers: 12040, avgSaving: "−47%", author: "Oryx", description: "Continuously scans nearby riders heading your direction and proposes merged rides." },
+  { id: "fastest", name: "Fastest Agent", emoji: "⚡", category: "Time", objective: "Minimize total travel time", color: "#ef4444", rating: 4.7, subscribers: 8210, avgSaving: "−12m", author: "Oryx", description: "Skips bargaining, locks nearest vehicle, re-routes around congestion live." },
+  { id: "safety", name: "Safety Agent", emoji: "🛡️", category: "Safety", objective: "Highest-safety routes only", color: "#60a5fa", rating: 4.9, subscribers: 6402, avgSaving: "Low risk", author: "Oryx", description: "Vets drivers, routes, weather and night conditions. Balances safety vs cost." },
+  { id: "calendar", name: "Calendar Agent", emoji: "📅", category: "Timing", objective: "Optimize schedule shifts", color: "#f472b6", rating: 4.8, subscribers: 4980, avgSaving: "GH₵23", author: "Oryx", description: "Reads your calendar, proposes leaving 20 min earlier or shifting meetings to dodge surge." },
+  { id: "eco", name: "Eco Agent", emoji: "🌱", category: "Eco", objective: "Lowest carbon footprint", color: "#22c55e", rating: 4.7, subscribers: 3120, avgSaving: "1.8kg CO₂", author: "Oryx", description: "Prefers electric, shared, and multi-modal low-emission journeys." },
+  { id: "market", name: "Market Agent", emoji: "📊", category: "Market", objective: "Watch every marketplace", color: "#f5a623", rating: 4.6, subscribers: 5840, avgSaving: "−18%", author: "Oryx", description: "Tracks promos, surge clearing, driver shortages and price anomalies across all providers." },
+  { id: "night-rider", name: "Night Rider", emoji: "🌙", category: "Lifestyle", objective: "Safe night travel specialist", color: "#818cf8", rating: 4.8, subscribers: 2210, avgSaving: "Safe", author: "Oryx", description: "After-hours specialist — vetted drivers, well-lit pickup points, live trip sharing." },
+  { id: "rush-hour", name: "Rush Crusher", emoji: "🏍️", category: "Time", objective: "Beat peak traffic", color: "#fb923c", rating: 4.5, subscribers: 1840, avgSaving: "−18m", author: "Oryx", description: "Combines moto + ride-hail to bypass gridlock during peak hours." },
+];
+
+export const AGENT_EXTENSIONS: AgentExtension[] = [
+  { id: "ext-campus", name: "Campus Pool", developer: "LegonLabs", emoji: "🎓", category: "Students", description: "Auto-pools students on the same campus route. Recognizes class schedules.", version: "1.4.2", installs: 4820, rating: 4.8, verified: true, status: "published", color: "#4ade80" },
+  { id: "ext-faith", name: "Fleet Connect", developer: "FleetOps Inc", emoji: "🚐", category: "Fleet", description: "Connects taxi dispatch software to Oryx liquidity pools. Drivers get instant demand.", version: "2.1.0", installs: 1240, rating: 4.7, verified: true, status: "published", color: "#f5a623" },
+  { id: "ext-mom", name: "School Run", developer: "ParentTech", emoji: "🎒", category: "Family", description: "Recurring school transport with verified drivers and live child tracking.", version: "1.0.8", installs: 920, rating: 4.9, verified: true, status: "published", color: "#fb7185" },
+  { id: "ext-eco-warrior", name: "Eco Warrior", developer: "GreenMobility", emoji: "🌍", category: "Eco", description: "Extreme carbon minimizer — will walk 800m and chain 3 modes to hit net-zero targets.", version: "0.9.2", installs: 610, rating: 4.4, verified: false, status: "published", color: "#22c55e" },
+  { id: "ext-medical", name: "MediRide", developer: "CareRoute", emoji: "🚑", category: "Health", description: "Medical appointment specialist — wheelchair access, on-time guarantee, insurance-aware.", version: "1.2.0", installs: 340, rating: 4.9, verified: true, status: "published", color: "#60a5fa" },
+  { id: "ext-corp", name: "CorpTravel", developer: "BizFleet", emoji: "💼", category: "Business", description: "Enforces corporate travel policy, auto-receipts, monthly billing via PaySwap.", version: "3.0.1", installs: 210, rating: 4.6, verified: true, status: "published", color: "#64748b" },
+  { id: "ext-courier-pro", name: "CourierPro", developer: "ShipKit", emoji: "📦", category: "Logistics", description: "Multi-stop courier optimizer for e-commerce sellers. Batch + route-chain parcels.", version: "1.8.0", installs: 880, rating: 4.5, verified: true, status: "published", color: "#fb923c" },
+  { id: "ext-pending-1", name: "Festival Flow", developer: "EventMobility", emoji: "🎪", category: "Events", description: "Pre-books surge capacity for event organizers. Reverse-auctions bulk ride demand.", version: "0.4.0", installs: 0, rating: 0, verified: false, status: "pending", color: "#a78bfa" },
+];
+
+export const FLEET_PLUGINS = [
+  { id: "fp-1", name: "CityCab Dispatch", type: "Taxi dispatch software", vehicles: 240, utilization: 78, zones: ["CBD", "Osu", "Airport"], connected: true, plugin: "DispatchSync v2", joinedPools: 3 },
+  { id: "fp-2", name: "GreenLine Shuttles", type: "Shuttle operator", vehicles: 60, utilization: 84, zones: ["East Legon", "Legon"], connected: true, plugin: "ShuttleBridge", joinedPools: 2 },
+  { id: "fp-3", name: "ExpressCouriers", type: "Courier fleet", vehicles: 120, utilization: 71, zones: ["Citywide"], connected: true, plugin: "CourierLink", joinedPools: 4 },
+  { id: "fp-4", name: "CorpFleet Africa", type: "Corporate fleet", vehicles: 45, utilization: 66, zones: ["Airport", "Octagon"], connected: false, plugin: "—", joinedPools: 0 },
+  { id: "fp-5", name: "TroTro Network", type: "Minibus cooperative", vehicles: 380, utilization: 82, zones: ["Tema", "Madina", "Circle"], connected: true, plugin: "TroTroAPI", joinedPools: 5 },
 ];

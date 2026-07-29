@@ -7,6 +7,7 @@ import type {
   Destination,
   FareQuote,
   Provider,
+  CommuteObligation,
 } from "./types";
 import {
   PROVIDERS,
@@ -16,7 +17,7 @@ import {
   SAVINGS_STATS,
 } from "./mock-data";
 
-type SheetSnap = "collapsed" | "half" | "full";
+type SheetSnap = "collapsed" | "search" | "half" | "full";
 
 interface OryxStore {
   // UI
@@ -63,6 +64,10 @@ interface OryxStore {
   // Merged ride prompt
   mergeOffer: { saving: number; riderName: string } | null;
   setMergeOffer: (m: { saving: number; riderName: string } | null) => void;
+  // Permanently dismissed this session — once accepted or rejected, never
+  // resurface the merge offer again until a new ride is requested.
+  mergeDismissed: boolean;
+  dismissMerge: () => void;
 
   // Live auction active (WS-driven) — suppresses merge offers etc.
   liveAuctionActive: boolean;
@@ -87,6 +92,20 @@ interface OryxStore {
   setUserTypes: (t: import("./types").UserType[]) => void;
   userName: string | null;
   setUserName: (n: string | null) => void;
+
+  // Commute calendar — future commute obligations for riders + drivers
+  commuteObligations: CommuteObligation[];
+  setCommuteObligations: (c: CommuteObligation[]) => void;
+  addCommuteObligation: (c: CommuteObligation) => void;
+  removeCommuteObligation: (id: string) => void;
+
+  // Agent marketplace — subscribed optimization agents (recruit multiple)
+  subscribedAgents: string[];
+  toggleAgentSubscription: (id: string) => void;
+
+  // Extensions — installed third-party agent extensions
+  installedExtensions: string[];
+  toggleExtension: (id: string) => void;
 }
 
 const emptyAuction: AuctionState = {
@@ -319,6 +338,8 @@ export const useOryx = create<OryxStore>((set, get) => ({
 
   mergeOffer: null,
   setMergeOffer: (m) => set({ mergeOffer: m }),
+  mergeDismissed: false,
+  dismissMerge: () => set({ mergeOffer: null, mergeDismissed: true }),
 
   liveAuctionActive: false,
   setLiveAuctionActive: (v) => set({ liveAuctionActive: v }),
@@ -339,4 +360,40 @@ export const useOryx = create<OryxStore>((set, get) => ({
   setUserTypes: (t) => set({ userTypes: t }),
   userName: null,
   setUserName: (n) => set({ userName: n }),
+
+  commuteObligations: [
+    {
+      id: "seed-1",
+      title: "Office commute",
+      origin: "East Legon",
+      destination: "The Octagon",
+      days: [1, 2, 3, 4, 5],
+      time: "08:00",
+      role: "rider",
+      recurring: true,
+    },
+  ],
+  setCommuteObligations: (c) => set({ commuteObligations: c }),
+  addCommuteObligation: (c) =>
+    set((s) => ({ commuteObligations: [...s.commuteObligations, c] })),
+  removeCommuteObligation: (id) =>
+    set((s) => ({
+      commuteObligations: s.commuteObligations.filter((o) => o.id !== id),
+    })),
+
+  subscribedAgents: ["savings", "pooling"],
+  toggleAgentSubscription: (id) =>
+    set((s) => ({
+      subscribedAgents: s.subscribedAgents.includes(id)
+        ? s.subscribedAgents.filter((a) => a !== id)
+        : [...s.subscribedAgents, id],
+    })),
+
+  installedExtensions: [],
+  toggleExtension: (id) =>
+    set((s) => ({
+      installedExtensions: s.installedExtensions.includes(id)
+        ? s.installedExtensions.filter((e) => e !== id)
+        : [...s.installedExtensions, id],
+    })),
 }));

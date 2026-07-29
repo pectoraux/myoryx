@@ -472,3 +472,52 @@ export interface FleetOperator {
   connected: boolean;
 }
 
+// Commute calendar — future/recurring commute obligations for riders + drivers
+export interface CommuteObligation {
+  id: string;
+  title: string;
+  origin: string;
+  destination: string;
+  // days of week 0=Sun..6=Sat
+  days: number[];
+  time: string; // "08:00"
+  role: "rider" | "driver";
+  recurring: boolean;
+  // for one-off obligations
+  date?: string; // ISO date
+  notes?: string;
+}
+
+// Agent marketplace — subscribable optimization agents
+export interface MarketAgent {
+  id: string;
+  name: string;
+  emoji: string;
+  category: string;
+  objective: string;
+  color: string;
+  rating: number;
+  subscribers: number;
+  avgSaving: string;
+  author: string; // "Oryx" for first-party, developer name for extensions
+  isExtension?: boolean;
+  installed?: boolean;
+  description: string;
+}
+
+// Extension — third-party developer-submitted agent
+export interface AgentExtension {
+  id: string;
+  name: string;
+  developer: string;
+  emoji: string;
+  category: string;
+  description: string;
+  version: string;
+  installs: number;
+  rating: number;
+  verified: boolean;
+  status: "published" | "pending" | "draft";
+  color: string;
+}
+

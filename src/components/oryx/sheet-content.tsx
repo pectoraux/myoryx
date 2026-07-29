@@ -39,12 +39,15 @@ import CommuteCommunities from "./commute-communities";
 import AI2AIMarketplace from "./ai2ai-marketplace";
 import MerchantIntegrations from "./merchant-integrations";
 import PaySwapPanel from "./payswap-panel";
+import { CommuteCalendar } from "./commute-calendar";
+import { AgentMarketplace, ExtensionStore } from "./agent-marketplace";
+import { FleetPlugins } from "./fleet-plugins";
 
 const FULL_TABS = [
   { id: "journey", label: "Journey", icon: Compass },
   { id: "auction", label: "Auction", icon: Gavel },
   { id: "market", label: "Market", icon: Store },
-  { id: "team", label: "Team", icon: Users },
+  { id: "agents", label: "Agents", icon: Users },
   { id: "network", label: "Network", icon: Network },
   { id: "savings", label: "Savings", icon: Wallet },
 ] as const;
@@ -131,8 +134,8 @@ export default function SheetContent() {
     if (activeView === "auction") setTab("auction");
   }
 
-  // Collapsed — search only
-  if (sheetSnap === "collapsed") {
+  // Collapsed or search-focused — show destination search (autocomplete)
+  if (sheetSnap === "collapsed" || sheetSnap === "search") {
     return <DestinationSearch />;
   }
 
@@ -175,6 +178,11 @@ export default function SheetContent() {
         <CalendarIntelligence />
         <DestinationIntel />
 
+        {/* Commute calendar — for riders + drivers to log obligations */}
+        <div className="px-4">
+          <CommuteCalendar />
+        </div>
+
         {/* Compact NPD + commute previews */}
         <NPDMarketplace />
         <CommuteCommunities />
@@ -189,7 +197,14 @@ export default function SheetContent() {
   return (
     <div>
       {/* Tab bar */}
-      <div className="sticky top-0 z-10 glass-strong flex items-center gap-0.5 border-b border-border/40 px-1.5 py-2">
+      <div
+        className="sticky top-0 z-10 flex items-center gap-0.5 border-b border-border/40 px-1.5 py-2"
+        style={{
+          background: "oklch(0.14 0.008 200 / 0.98)",
+          backdropFilter: "blur(20px) saturate(1.5)",
+          WebkitBackdropFilter: "blur(20px) saturate(1.5)",
+        }}
+      >
         {FULL_TABS.map((t) => {
           const active = tab === t.id;
           return (
@@ -244,6 +259,7 @@ export default function SheetContent() {
               <ReturnRides />
               <PersonalDrivers />
               <CommuteCommunities />
+              <CommuteCalendar />
             </div>
           )}
           {tab === "market" && mode === "parcel" && (
@@ -252,7 +268,16 @@ export default function SheetContent() {
               <ParcelCourierOptimizer />
             </div>
           )}
-          {tab === "team" && <MobilityTeam />}
+          {tab === "agents" && (
+            <div>
+              <AgentMarketplace />
+              <ExtensionStore />
+              <FleetPlugins />
+              <div className="px-4 pb-8">
+                <MobilityTeam />
+              </div>
+            </div>
+          )}
           {tab === "network" && (
             <div>
               <IntelligenceNetwork />

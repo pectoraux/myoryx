@@ -24,7 +24,7 @@ const MapView = dynamic(() => import("@/components/oryx/map-view"), {
  * exists. Logic is unchanged.
  */
 export default function OryxApp() {
-  const { destination, mergeOffer, setMergeOffer, liveAuctionActive } = useOryx();
+  const { destination, mergeOffer, setMergeOffer, mergeDismissed, liveAuctionActive } = useOryx();
   const [vehicles, setVehicles] = useState(() => generateVehicles(CITY_CENTER, 14));
 
   // Animate vehicles drifting around the map
@@ -46,15 +46,18 @@ export default function OryxApp() {
     return () => clearInterval(id);
   }, []);
 
-  // Demo: surface a merge offer once, after a delay, when not in an auction
+  // Demo: surface a merge offer once, after a delay, when not in an auction.
+  // Once the user accepts OR rejects it (mergeDismissed), never resurface
+  // the offer again this session.
   useEffect(() => {
     if (mergeOffer) return;
+    if (mergeDismissed) return;
     if (liveAuctionActive) return;
     const id = setTimeout(() => {
       setMergeOffer({ saving: 6, riderName: "Ama O." });
     }, 32000);
     return () => clearTimeout(id);
-  }, [mergeOffer, liveAuctionActive, setMergeOffer]);
+  }, [mergeOffer, mergeDismissed, liveAuctionActive, setMergeOffer]);
 
   const auctionActive = liveAuctionActive;
 

@@ -2,7 +2,7 @@
 import { useRef, useCallback, useState, type ReactNode } from "react";
 import { useOryx } from "@/lib/store";
 
-const SNAP_PERCENTS = { collapsed: 18, half: 56, full: 94 } as const;
+const SNAP_PERCENTS = { collapsed: 18, search: 44, half: 56, full: 94 } as const;
 
 interface BottomSheetProps {
   children: ReactNode;
@@ -45,6 +45,7 @@ export default function BottomSheet({ children }: BottomSheetProps) {
     (h: number) => {
       const snaps: Array<{ key: keyof typeof SNAP_PERCENTS; val: number }> = [
         { key: "collapsed", val: SNAP_PERCENTS.collapsed },
+        { key: "search", val: SNAP_PERCENTS.search },
         { key: "half", val: SNAP_PERCENTS.half },
         { key: "full", val: SNAP_PERCENTS.full },
       ];
@@ -79,7 +80,17 @@ export default function BottomSheet({ children }: BottomSheetProps) {
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      <div className="glass-strong relative mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border-x border-t border-border/70 shadow-2xl shadow-black/60">
+      <div
+        className="relative mx-auto flex h-full w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border-x border-t border-border/80 shadow-2xl shadow-black/70"
+        style={{
+          // Opaque background so content is readable without the map
+          // bleeding through. Slight transparency only at the very top.
+          background:
+            "linear-gradient(180deg, oklch(0.16 0.008 200 / 0.96) 0%, oklch(0.14 0.008 200 / 0.99) 12%, oklch(0.135 0.008 200) 100%)",
+          backdropFilter: "blur(24px) saturate(1.5)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.5)",
+        }}
+      >
         {/* Drag handle */}
         <div
           onPointerDown={onPointerDown}
@@ -99,7 +110,7 @@ export default function BottomSheet({ children }: BottomSheetProps) {
               key={s}
               onClick={() => setSheetSnap(s)}
               className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
-                sheetSnap === s
+                sheetSnap === s || (s === "collapsed" && sheetSnap === "search")
                   ? "bg-foreground/10 text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
