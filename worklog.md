@@ -702,3 +702,25 @@ Verification:
 
 Stage Summary:
 The Driver Operating System UI is now a complete, production-grade surface for Oryx's M14–M15 driver experience. The `driver-dashboard.tsx` component gives drivers a tabbed dashboard — Overview (4 stat cards + earnings goals + visual coverage map + applications tracker), Schedule (AI-built daily timeline with chained stops + utilization/empty-miles summary + Rebuild), History (ride history + reviews, both scrollable), and Settings (preferences editor + return ride broadcasting + applications tracker). The `driver-marketplace.tsx` component gives riders a marketplace to browse 6 subscription packages, filter by zone/specialty/rating/price, view full package + driver details in a slide-over, run the flagship 5-factor compatibility checker (large circular gauge + animated per-factor breakdown with detail text), and apply with one tap — followed by an animated confirmation modal and a live applications tracker showing each application's score and status. Both components use the established design language (dark theme, opaque cards, emerald/amber/violet/cyan/rose accents, framer-motion entrance animations, lucide-react icons, tabular-nums, custom scrollbar). Lint clean, TypeScript clean, dev server healthy.
+
+---
+Task ID: 11-driver-os
+Agent: orchestrator
+Task: Build the Driver Operating System (M14-M15) — driver profiles, AI scheduling, personal driver marketplace with calendar compatibility scoring.
+
+Work Log:
+- Built src/lib/kernel/driver-os.ts (~400 lines): DriverOS registry with profile management, statistics, ride history, reviews, subscription packages, AI schedule builder, return ride broadcasting, and subscription matching with 5-factor calendar compatibility scoring.
+- Driver Scheduling Engine (M15): AI daily schedule builder that chains rides/pools/parcels/subscriptions/returns from hourly demand patterns. Respects working hours, preferred neighborhoods, max hours/day. Tracks projected earnings, hours, utilization, empty miles. 10 stops, $204 projected.
+- Subscription Compatibility Scoring: 5-factor algorithm — schedule overlap (25%), time window (20%), route coverage (25%), driver reputation (15%), availability (15%). Returns overall score + factor breakdown. Verified: 89/100.
+- Return Ride Broadcasting: drivers broadcast return capacity with 35-50% discounts.
+- Driver Applications: riders apply, drivers approve/reject, compatibility computed at application time.
+- 4 seeded driver profiles with full ride history (15 rides each), reviews (5 each), 6 subscription packages, coverage maps, preferences, return ride broadcasts.
+- New types: DriverOSProfile, CoverageArea, DriverStats, RideHistoryEntry, DriverReview, SubscriptionPackage, DriverApplication, CompatibilityFactor, DriverSchedule, ScheduleStop, ReturnRideBroadcast, DriverPreferences.
+- New API routes: /drivers (list/filter/profile/update), /drivers/marketplace (browse/apply/score), /drivers/schedule (AI build), /drivers/applications (list/review).
+- Driver UI: driver-dashboard.tsx (4-tab dashboard with stats, AI schedule, history, preferences, broadcasting) + driver-marketplace.tsx (filter, browse, compare, compatibility checker, apply). Updated personal-drivers-hub.tsx.
+
+Verification (Vercel):
+- 4 drivers, 6 packages, AI schedule (10 stops, $204), compatibility 89/100. HTTP 200. Lint clean.
+
+Stage Summary:
+- The Driver Operating System is live. Drivers never search for work — the AI builds their daily schedule. Riders browse, filter, compare, and apply for personal driver subscriptions with calendar-based compatibility scoring. Live at https://myoryx.vercel.app.
