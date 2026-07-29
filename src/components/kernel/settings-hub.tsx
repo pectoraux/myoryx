@@ -20,6 +20,7 @@ import { MobilityTeam } from "@/components/kernel/mobility-team";
 import { FleetPlugins } from "@/components/oryx/fleet-plugins";
 import { SavingsPanel } from "@/components/oryx/savings-panel";
 import { IntelligenceNetwork } from "@/components/oryx/intelligence-network";
+import { IntelligenceDashboard } from "@/components/kernel/intelligence-dashboard";
 import { DriverIntelligence } from "@/components/oryx/driver-intelligence";
 import { DeveloperConsole } from "@/components/kernel/developer-console";
 import { useOryx } from "@/lib/store";
@@ -148,6 +149,7 @@ export function SettingsHub() {
             {section === "savings" && <SavingsPanel />}
             {section === "network" && (
               <div>
+                <IntelligenceDashboard />
                 <IntelligenceNetwork />
                 <DriverIntelligence />
               </div>

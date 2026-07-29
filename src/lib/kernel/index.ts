@@ -12,6 +12,7 @@ import { sagas, seedSagas } from "./sagas";
 import { driverOS, seedDrivers } from "./driver-os";
 import { seedMarketplace } from "./marketplace";
 import { seedEnterprise } from "./enterprise";
+import { seedIntelligence } from "./intelligence";
 import {
   featureFlags,
   generateId,
@@ -88,6 +89,9 @@ export function initKernel(): void {
 
   // 7d. Enterprise Platform (M19-M20): SDKs, OAuth, Webhooks, Certification
   seedEnterprise();
+
+  // 7e. Global Intelligence (M21+): Continuous learning, forecasting, compliance
+  seedIntelligence();
 
   // 8. Background jobs — register handlers
   jobs.register("intent.optimize", async (job) => {
@@ -193,3 +197,23 @@ export {
   replayOptimization,
   seedEnterprise,
 } from "./enterprise";
+
+// Global Intelligence (M21+): Learning, Forecasting, Optimization, Compliance
+export {
+  learning,
+  forecastDemand,
+  forecastSupply,
+  computeMarketplaceIntel,
+  optimizeGlobal,
+  optimizeByScope,
+  recommendations,
+  experiments,
+  compliance,
+  COUNTRY_CONFIGS,
+  REGULATORY_RULES,
+  rateLimiter,
+  runSecurityAudit,
+  disasterRecovery,
+  computeIntelligenceDashboard,
+  seedIntelligence,
+} from "./intelligence";

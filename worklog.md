@@ -820,3 +820,48 @@ Verification (Vercel):
 
 Stage Summary:
 - The Enterprise Platform is live. Developers get 6 SDKs, OAuth authentication, webhooks, connector certification, version management, a testing sandbox with event replay, auto-generated documentation, plugin monitoring, and a production cloud-IDE Developer Console with 16 tools. Live at https://myoryx.vercel.app.
+
+---
+Task ID: 14-intel-dashboard
+Agent: intel-dashboard
+Task: Build the flagship Intelligence Dashboard (M21+) — `src/components/kernel/intelligence-dashboard.tsx`. Bloomberg-terminal-grade view of the complete Oryx Mobility OS state: Network IQ, connector health, KPI grid, AI agent performance, continuous learning, marketplace liquidity, global optimization, demand forecast, A/B experiments, compliance/security/DR, and personalized recommendations. Only this one file may be created.
+
+Work Log:
+- Read the worklog (Tasks 0–13) and `src/lib/kernel/intelligence.ts` to confirm the `IntelligenceDashboard` data model + the 4 backend API routes (`/api/kernel/intelligence`, `/intelligence/compliance[?detail=security]`, `/intelligence/forecast`, `/intelligence/experiments`).
+- Created `src/components/kernel/intelligence-dashboard.tsx` (~1,768 lines, single "use client" component, self-contained, opaque-card Bloomberg-terminal aesthetic, dark theme, emerald/amber/cyan/violet/rose accent system, framer-motion entrance animations, recharts for all charts, SVG stroke-dasharray circular gauges, polls `/api/kernel/intelligence` + `/intelligence/compliance?detail=security` every 5s).
+- Mirrored the full backend type surface locally (IntelligenceDashboard, ConnectorHealth, AIAgentPerformance, LearningProgression + LearningRecord, MarketplaceIntel, OptimizationResult, DemandForecast, Recommendation, Experiment + ExperimentVariant, SecurityCheck, DisasterRecovery) so the component is fully typed without importing kernel internals.
+- Shared primitives: `Panel` (titled section card with icon + accent + right slot), `Badge`, `MiniStat`, `ProgressBar` (animated width), `CircularGauge` (SVG, animated strokeDashoffset, color-coded by IQ thresholds: green ≥80 / amber ≥60 / rose <60), `ChartTooltip`, plus helpers (`fetchJson`, `fmtMoney`, `fmtNum`, `fmtPct`, `timeAgo`, `shortDate`, `iqColor`, `insightTypeColor`, `recTypeMeta`, `securityStatusMeta`, `retentionLabel`, `retentionDaysToLabel`).
+- Built all 11 spec sections in order:
+  1. **Hero — Global Network IQ**: large SVG circular gauge (color-coded by IQ) + 6 surrounding mini-stats (graph nodes, connectors live, agents active, learning records, marketplace liquidity, optimization success).
+  2. **KPI Grid**: 8 cards (2×4 on desktop, 2×2 on mobile) — Money Saved (emerald/Wallet), Driver Earnings +23% (amber/TrendingUp), Fleet Utilization +8% (cyan/Activity), Empty-Mile Reduction 38% (emerald/TrendingDown good), Pooling 78% (violet/Users), Carbon 1,240 kg (emerald/Leaf), Optimization Success 87% (emerald/CheckCircle), AI Confidence 82% (cyan/Brain). Each with icon, big number, label, trend chip (up/down arrow + good/bad color).
+  3. **Connector Health**: 3 status tiles (live/degraded/error counts), animated stacked distribution bar, recharts BarChart of connector counts by status, plus a graph-by-type breakdown panel (top 6 node types with animated progress bars + counts).
+  4. **AI Agent Performance**: 3 stat columns (active/total, tasks completed, negotiations won) + a 12-tick sparkline area chart of avg confidence trend with reference line at current avg.
+  5. **Learning Progression (flagship)**: model version badge (v312) + delta badge, SVG accuracy gauge (color-coded), records + rate + avg-confidence tiles, 7-day recharts LineChart of accuracy trend (violet, with dots), by-type chip row, scrollable top-insights list (each: type badge, pattern, confidence %, applied count × N, insight detail).
+  6. **Marketplace Liquidity**: SVG liquidity-score gauge + total capacity, 6-count grid (providers, drivers, NPDs, fleets, merchants, active auctions), 3 savings progress bars (pool match rate, avg auction saving, avg negotiation saving).
+  7. **Global Optimization**: scope + target badges, 6 animated metric bars (utilization, cost reduction, empty-mile, pooling, carbon, time savings), scrollable recommendations list with chevron bullets.
+  8. **Demand Forecast**: 3 summary tiles (peak/low/avg surge), recharts AreaChart (12h) with demand + surge overlays and reference lines at high(100)/medium(60) thresholds, demand-zone chips (low/med/high color-coded) for first 6 hours.
+  9. **A/B Experiments**: expandable list, each experiment shows name, status badge, winner badge (if any), confidence %, and an animated expand showing variants (name, winner flag, traffic %, participants, conversion rate bar, metric value bar).
+  10. **Compliance & Security**: two side-by-side panels. Compliance — 2 big stats (countries, rules enforced) + data-retention policy list (ride 90d, parcel 90d, payment 7y, analytics 1y, audit 7y). Security — 3 status tiles (passed/warnings/failed) + expandable list of all security checks (category badge, status icon, detail). Includes a Disaster Recovery mini-panel: RTO/RPO tiles, backup frequency/retention, failover strategy, last backup/failover-test timeAgo, multi-region badge, and region chips.
+  11. **Recommendations**: 2-col grid of personalized recs, each with type icon + label badge, title, actionable badge, detail, potential saving (emerald), confidence % (violet). Header shows total potential saving.
+- Title bar: cyan "Intelligence Dashboard" pill, headline, subhead, live/reconnecting status pill with pulsing dot, last-updated + "polling 5s" tabular-nums clock.
+- Loading state: animated pulse skeletons matching the section layout.
+- All fetches use relative URLs only (`/api/kernel/intelligence`, `/api/kernel/intelligence/compliance?detail=security`) with `cache: "no-store"`. No direct localhost/port references.
+- `mounted` ref guard prevents setState after unmount; `Promise.all` for parallel initial fetch; 5s `setInterval` for live polling.
+- All cards use `bg-card/95` + `backdrop-blur-sm` for opaque rendering in the bottom sheet (per spec note that the dashboard renders in a bottom sheet).
+- Custom `scroll-thin` scrollbar styling on all `max-h-*` overflow lists (top insights, recommendations, security checks, recommendations).
+- Responsive: hero stacks gauge-above-grid on mobile; KPI grid 2 cols → 4 cols; connector/compliance panels 1 col → 2 cols at `lg`; touch targets ≥32px.
+
+Issues:
+- One initial lint warning: `Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')` on the `useEffect` `void poll()` line. The `void poll()` pattern with all setStates happening post-`await` does NOT trigger the rule (unlike the synchronous `fetchHealth()` calls in developer-console.tsx), so the disable comment was unnecessary. Removed the comment + the warning. Lint now passes clean (0 errors, 0 warnings).
+- No other issues. No file outside `src/components/kernel/intelligence-dashboard.tsx` was touched. The component is self-contained and ready for the orchestrator to wire into the Settings hub "Network" section.
+
+Verification:
+- `bun run lint` → 0 errors, 0 warnings (clean).
+- `tail -20 dev.log` → dev server healthy ("✓ Ready in 710ms", kernel initialized with 48 nodes / 6 connectors / 25 agents, `GET /api/kernel/intelligence 200 in 474ms`). No compile errors. No TSX failures. (The dashboard file is not yet imported by any route — that wiring is a separate task; lint validates types + syntax regardless.)
+- Did NOT run `bun run build` per instructions.
+
+Stage Summary:
+- The Intelligence Dashboard is complete. A dense, information-rich Bloomberg-terminal view of the entire Oryx Mobility OS — Network IQ, 8 KPI cards, connector health + graph breakdown, AI agent performance with confidence sparkline, the flagship continuous-learning view (accuracy gauge + 7-day trend + top insights), marketplace liquidity, global optimization metrics + recommendations, 12-hour demand forecast, A/B experiments with variant comparison, compliance + security audit + disaster recovery, and personalized recommendations. All driven by live 5s polling of the M21+ intelligence backend via relative API URLs. Lint clean, ready for wiring into the Settings hub Network section.
+
+Files created:
+- `src/components/kernel/intelligence-dashboard.tsx` (~1,768 lines)
