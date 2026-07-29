@@ -724,3 +724,24 @@ Verification (Vercel):
 
 Stage Summary:
 - The Driver Operating System is live. Drivers never search for work — the AI builds their daily schedule. Riders browse, filter, compare, and apply for personal driver subscriptions with calendar-based compatibility scoring. Live at https://myoryx.vercel.app.
+
+---
+Task ID: 12-marketplace
+Agent: orchestrator
+Task: Build the Unified Marketplace (M16-M18) — NPDs, Fleet Connectors, Parcel Network, Merchant APIs, Mixed Journey Composition.
+
+Work Log:
+- Built src/lib/kernel/marketplace.ts (~500 lines) with 5 engines:
+  1. NPD Engine: publish routes/seats/returns/schedule windows. Matching algorithm with route overlap scoring. Seat booking. 4 seeded NPDs.
+  2. Fleet Connector Framework: fleets connect via plugin APIs, expose real-time capacity (vehicle type, zone, availability, ETA). Capacity sync. Query across all fleets. Fleet marketplace (join liquidity pools). 3 seeded fleets, 6 vehicles.
+  3. Parcel Network: create parcels → auto-start auction (5 couriers bid) → auto-check batching (parcels to same area share courier at 60% saving) → dispatch. Full tracking history. 3 parcels auto-generated from merchant orders.
+  4. Merchant Engine: register with API keys/webhooks. Orders from merchant sites AUTO-GENERATE parcel intents. 3 merchants, 3 orders.
+  5. Mixed Journey Composer: combines NPD + transit + walk + ride-hail + fleet + moto into 6 journey types. Real cost/duration/CO₂. Scored and sorted.
+- New types: NPDPublication, FleetConnector, FleetCapacity, ParcelIntent, ParcelAuction, ParcelBid, ParcelBatch, ParcelTrackingEvent, MerchantAccount, MerchantOrder, MixedJourney, MixedJourneyHop.
+- New API routes: /marketplace/npd, /marketplace/fleet, /marketplace/parcel, /marketplace/merchant, /marketplace/journey.
+
+Verification (Vercel):
+- 4 NPDs (2 matched at 100%+50%), 3 fleets (6 vehicles), 3 parcels (auto-auctioned, avg $8.13), 3 merchants (3 orders → auto parcel intents), 6 mixed journeys (top: NPD+walk $6). HTTP 200. Lint clean.
+
+Stage Summary:
+- Oryx is now a unified mobility marketplace. NPDs publish routes, fleets expose capacity via connectors, parcels auto-auction and batch, merchants auto-generate parcel intents from checkout, and AI agents compose mixed journeys combining all provider types. Live at https://myoryx.vercel.app.
