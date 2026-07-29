@@ -745,3 +745,50 @@ Verification (Vercel):
 
 Stage Summary:
 - Oryx is now a unified mobility marketplace. NPDs publish routes, fleets expose capacity via connectors, parcels auto-auction and batch, merchants auto-generate parcel intents from checkout, and AI agents compose mixed journeys combining all provider types. Live at https://myoryx.vercel.app.
+
+---
+Task ID: 13-dev-console
+Agent: dev-console
+Task: Rebuild the Developer Console (M19–M20) as a production cloud-IDE with 16 tools spanning extensions, simulators, inspectors, build, and enterprise SDKs.
+
+Work Log:
+- Rewrote `src/components/kernel/developer-console.tsx` from scratch as a single "use client" component (~4,720 lines) with a cloud-IDE aesthetic: dark terminal-grade theme, monospace traces, framer-motion panel transitions, traffic-light title bar, live "connected/offline" status.
+- Top bar: 4 kernel health badges (graph nodes/edges, connectors live/total + events ingested, AI agents active/total + queued, events-per-poll + stored) polled every 3s via `/api/kernel/graph`, `/api/kernel/connectors`, `/api/kernel/ai-stats`, `/api/kernel/events?limit=80`.
+- Left sidebar: 5 collapsible groups (Extensions, Simulators, Inspectors, Build, Enterprise) containing 16 tools, each with icon + label + active ring. Collapsible via `AnimatePresence` height animation.
+- Main panel: `AnimatePresence mode="wait"` with keyed motion transitions on `activeTool` change.
+- 16 tools implemented, each fetching its own data via relative URLs:
+  1. **Extensions** — installed list + manifest editor (permissions/hooks multi-select), logs panel (auto-scroll, color-coded by level), events tab (filterable), hot-reload, validate, submit. Preserved + enhanced existing functionality.
+  2. **Connector Simulator** — connector dropdown + event type + JSON payload textarea with `safeJsonParse` validation → POST `/api/kernel/webhook/{connectorId}`. Shows the published event-type hint (`connector.{category}.webhook`) + recent connector events feed (polls 2s).
+  3. **Ride Simulator** — origin/destination/price/provider form → POST `/api/kernel/dev-console {action:"simulateRide"}`. Renders a 4-step flow chain (Create intent → Optimize → Auction → Book) that lights up when matching events arrive, plus a live event chain timeline.
+  4. **Event Inspector** — live feed from parent-polled events, filter by type/aggregateId/correlationId, each row expandable to show full JSON payload in a `<pre>`. Color-coded by type prefix. Auto-refresh indicator.
+  5. **Workflow Debugger** — polls `/api/kernel/sagas` every 2.5s. List of active sagas + step-by-step view with done/current/compensating states color-coded, completed-events chips.
+  6. **Graph Inspector** — polls `/api/kernel/enterprise/inspect?tool=graph` every 5s. Stats cards (nodes/edges/types), by-type bar chart (gradient bars), clickable sample nodes that open a detail card showing edges + attributes JSON.
+  7. **AI Trace Viewer** — polls `/api/kernel/enterprise/inspect?tool=ai` for 25-agent list; selecting an agent polls `?tool=ai&agentId=...` every 4s for full decision trace. Terminal-style rendering: `$ action` with outcome badge, confidence, triggered-by, reasoning, and structured `reasoningSteps` in an amber-bordered trace block.
+  8. **Optimization Replay** — polls `/api/kernel/intents?userId=demo` for intent list; selecting one polls `?tool=replay&intentId=...` every 6s. Renders intent header, 24h cost-over-time bar chart (color-coded by demand level) with cheapest/peak annotations, suggestions list (kind + confidence + saving), and step timeline.
+  9. **Package Builder** — manifest form (id/name/version/developer/category/description/emoji/color/entrypoint + permissions/hooks multi-select). 4 actions: Validate (POST validate), Generate docs (fetches sample SDK docs), Package (Blob download as `.oryx.json` with checksum), Submit to Store (POST submit).
+  10. **Submission Workflow** — extension list + per-extension: run certification (POST `/api/kernel/enterprise/certification`), publish version (POST `/api/kernel/enterprise/versions`). Shows 8 certification requirements reference, certification result with score + per-requirement pass/fail, version history with downloads.
+  11. **SDK Browser** — fetches `/api/kernel/enterprise/docs` for SDK list, `/api/kernel/enterprise/sdk` for full definitions. Each method rendered with signature (cyan), return type, description, and example in a dark code block. "View docs" button fetches generated docs.
+  12. **OAuth Manager** — polls `/api/kernel/enterprise/oauth` every 5s. Register-client form (name/type/redirectUris/scopes), client cards showing clientId + clientSecret + scopes + redirect URIs, Authorize button issues a token (shown in a recent-tokens list with access/refresh tokens + expiry).
+  13. **Webhook Manager** — polls `/api/kernel/enterprise/webhooks` every 4s. Register-endpoint form (URL + events), endpoint cards with secret + delivery history, "Send test event" button (POST `{action:"deliver"}`).
+  14. **Sandbox** — polls `/api/kernel/enterprise/sandbox` every 4s. Create session, replay events, simulate ride, run tests. Test results with pass/fail/skip badges + duration. Session events timeline.
+  15. **Monitoring** — polls `/api/kernel/enterprise/monitoring` every 3s. Health summary cards (healthy/degraded/error/total) + per-extension cards with status dot, metrics (events/errors/latency/memory), last-error display.
+  16. **Documentation** — fetches `/api/kernel/enterprise/docs` for SDK list. Sidebar to pick API Reference or any SDK doc. Custom lightweight `MarkdownRender` component handles `#`/`##`/`###` headings, ``` code fences, `- ` lists, and `` `inline code` ``. Download button exports as `.md`.
+- Shared primitives: `ToolHeader`, `HealthBadge`, `SectionLabel`, `StatCard`, `Metric`, `EmptyState`, `Field`, `MultiSelect`, `MarkdownRender`, `renderInlineCode`, plus helpers (`timeAgo`, `tsClock`, `eventColor`, `statusColor`, `safeJsonParse`, `prettyJson`, `fetchJson`).
+- All fetches use relative URLs only (`/api/kernel/...`) with `cache: "no-store"`. No direct localhost/port references.
+- Responsive: sidebar collapses above main panel on mobile (`grid-cols-1 md:grid-cols-[200px_1fr]`); health badges `grid-cols-2 sm:grid-cols-4`; scroll-thin class on all scrollable lists with `max-h-*` overflow.
+- Accessibility: semantic buttons, `title` attributes on sidebar tools, ARIA-friendly labels on form fields, keyboard-navigable.
+
+Issues:
+- 5 `react-hooks/set-state-in-effect` lint errors initially flagged (synchronous `setLoading(true)` / `fetchHealth()` calls in `useEffect` bodies). Fixed by: (a) moving `setLoading(true)` inside the async `poll` function so it runs after the first `await` (not synchronously in the effect body), and invoking via `void poll()`; (b) for the main health-poll effect, adding `// eslint-disable-next-line react-hooks/set-state-in-effect` before `void fetchHealth()` (established codebase pattern — `fetchHealth` is async and all its setStates are post-`await`, so it's not a real synchronous setState). One unused-directive warning was removed. Lint now passes clean (0 errors, 0 warnings).
+- Pre-existing `/api/seed` Prisma error in dev.log (postgres URL not configured) is unrelated to this task — no file in scope touches Prisma.
+
+Verification:
+- `bun run lint` → 0 errors, 0 warnings.
+- `tail -20 dev.log` → "✓ Compiled" (3 successful compiles), no errors referencing `developer-console.tsx` or any TSX compile failure.
+- Did NOT run `bun run build` per instructions.
+
+Stage Summary:
+- The Developer Console is now a production-grade cloud-IDE with 16 integrated tools covering the entire extension lifecycle: develop (Extensions, Package Builder), simulate (Connector/Ride/Sandbox), inspect (Events, Sagas, Graph, AI Trace, Replay), and operate (Submissions, SDK, OAuth, Webhooks, Monitoring, Docs). All data flows from the M19–M20 enterprise backend via relative API fetches with 2–5s polling intervals. The UI matches the terminal-grade dark aesthetic of the existing kernel components (mobility-planning-engine, mobility-team) with consistent emerald/cyan/amber/violet accent system.
+
+Files modified:
+- `src/components/kernel/developer-console.tsx` (rewritten, ~4,720 lines)

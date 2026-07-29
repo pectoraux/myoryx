@@ -11,6 +11,7 @@ import { planningEngine, seedPlanningEngine } from "./planning-engine";
 import { sagas, seedSagas } from "./sagas";
 import { driverOS, seedDrivers } from "./driver-os";
 import { seedMarketplace } from "./marketplace";
+import { seedEnterprise } from "./enterprise";
 import {
   featureFlags,
   generateId,
@@ -84,6 +85,9 @@ export function initKernel(): void {
 
   // 7c. Unified Marketplace (M16-M18): NPDs, Fleets, Parcels, Merchants
   seedMarketplace();
+
+  // 7d. Enterprise Platform (M19-M20): SDKs, OAuth, Webhooks, Certification
+  seedEnterprise();
 
   // 8. Background jobs — register handlers
   jobs.register("intent.optimize", async (job) => {
@@ -173,3 +177,19 @@ export {
   composeMixedJourney,
   seedMarketplace,
 } from "./marketplace";
+
+// Enterprise Platform (M19-M20): SDKs, OAuth, Webhooks, Certification, Sandbox
+export {
+  SDKS,
+  oauth,
+  webhooks,
+  certification,
+  versions,
+  sandbox,
+  docsGenerator,
+  pluginMonitor,
+  inspectGraph,
+  inspectAITraces,
+  replayOptimization,
+  seedEnterprise,
+} from "./enterprise";
