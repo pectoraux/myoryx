@@ -16,6 +16,7 @@ import {
 import { OptimizationProfiles } from "@/components/oryx/optimization-profiles";
 import JourneyComposer from "@/components/oryx/journey-composer";
 import { AgentMarketplace, ExtensionStore } from "@/components/oryx/agent-marketplace";
+import { MobilityTeam } from "@/components/kernel/mobility-team";
 import { FleetPlugins } from "@/components/oryx/fleet-plugins";
 import { SavingsPanel } from "@/components/oryx/savings-panel";
 import { IntelligenceNetwork } from "@/components/oryx/intelligence-network";
@@ -131,7 +132,12 @@ export function SettingsHub() {
                 <JourneyComposer />
               </div>
             )}
-            {section === "agents" && <AgentMarketplace />}
+            {section === "agents" && (
+              <div>
+                <MobilityTeam />
+                <AgentMarketplace />
+              </div>
+            )}
             {section === "extensions" && (
               <div>
                 <ExtensionStore />

@@ -405,6 +405,117 @@ export interface AgentDecision {
   action: string;
   timestamp: number;
   outcome?: "success" | "failure" | "pending";
+  // explainability: what events/facts led to this decision
+  triggeredBy?: string;
+  confidence?: number;
+  // structured reasoning steps for the UI
+  reasoningSteps?: string[];
+}
+
+// --- Multi-agent runtime (M7-M9) ----------------------------------------
+
+export type AgentStatus = "active" | "thinking" | "negotiating" | "idle" | "learning";
+
+export interface AgentTask {
+  id: string;
+  agentId: string;
+  type: string; // e.g. "optimize_intent", "negotiate_bid", "find_pool"
+  description: string;
+  status: "queued" | "running" | "completed" | "failed";
+  intentId?: string;
+  input: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  createdAt: number;
+  startedAt?: number;
+  completedAt?: number;
+  // reasoning trace for explainability
+  reasoningSteps: string[];
+}
+
+export interface AgentNegotiation {
+  id: string;
+  buyerAgentId: string;
+  sellerAgentId: string;
+  asset: string;
+  status: "negotiating" | "settled" | "rejected";
+  rounds: AgentNegotiationRound[];
+  openingPrice: number;
+  currentPrice: number;
+  settledPrice?: number;
+  startedAt: number;
+  settledAt?: number;
+}
+
+export interface AgentNegotiationRound {
+  round: number;
+  agentId: string;
+  action: "offer" | "counter" | "accept" | "reject";
+  price: number;
+  reasoning: string;
+  timestamp: number;
+}
+
+export interface LearnedOptimization {
+  id: string;
+  agentId: string;
+  pattern: string; // e.g. "Tuesday 8am surge always 2.4x"
+  insight: string;
+  confidence: number;
+  appliedCount: number;
+  learnedAt: number;
+  // the optimization that was learned
+  optimization: {
+    type: string; // "shift", "pool", "route", etc.
+    params: Record<string, unknown>;
+  };
+}
+
+export interface AgentMetrics {
+  agentId: string;
+  tasksCompleted: number;
+  tasksFailed: number;
+  negotiationsWon: number;
+  negotiationsLost: number;
+  totalSavingsGenerated: number;
+  avgConfidence: number;
+  avgTaskDurationMs: number;
+  lastActiveAt: number;
+  // performance history (rolling 7-day)
+  dailyStats: Array<{ date: string; tasks: number; savings: number; successRate: number }>;
+}
+
+export interface AgentCooperation {
+  id: string;
+  agents: string[]; // cooperating agent ids
+  type: "shared_plan" | "delegated_task" | "negotiation" | "information_share";
+  description: string;
+  timestamp: number;
+  outcome: "success" | "pending" | "failed";
+}
+
+export interface AgentConfig {
+  agentId: string;
+  // user-configurable settings
+  enabled: boolean;
+  aggressiveness: number; // 0-1, how aggressively to negotiate
+  riskTolerance: number; // 0-1
+  learningEnabled: boolean;
+  // permission overrides (grants beyond the agent's default policy)
+  permissionOverrides: string[];
+  // custom parameters
+  params: Record<string, unknown>;
+}
+
+// Extended agent memory with learning
+export interface AgentMemory {
+  agentId: string;
+  facts: Record<string, unknown>;
+  decisions: AgentDecision[];
+  // M7-M9 additions
+  tasks: AgentTask[];
+  learnedOptimizations: LearnedOptimization[];
+  metrics: AgentMetrics;
+  config: AgentConfig;
 }
 
 // --- CQRS -----------------------------------------------------------------
