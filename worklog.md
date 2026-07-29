@@ -231,3 +231,29 @@ Work Log:
 
 Stage Summary:
 - Oryx is LIVE at https://myoryx.vercel.app. GitHub: https://github.com/pectoraux/myoryx. Neon Postgres connected. NextAuth (credentials + waitlist + admin approval + demo multi-type quick-login) fully functional on production. The app behaves identically on Vercel as on the sandbox (WS auction replaced by local sim with the same UX).
+
+---
+Task ID: 5-ux-polish
+Agent: orchestrator
+Task: Fix 8 UX issues + add commute calendar, agent marketplace, extension store, fleet plugins. Deploy to Vercel.
+
+Work Log:
+- Bottom sheet: replaced transparent glass-strong with opaque gradient background (0.96→0.99→solid) so content is readable without map bleed-through. Tab bar also opaque.
+- Search autocomplete: added Google Maps-style suggestion dropdown with 20 Accra POI templates (airport, shopping, school, office, food, transit, etc.) filtered by query. Added new "search" snap state (44vh) — focusing the search input snaps the sheet up to make room for suggestions, just like Google Maps. DestinationSearch renders for both "collapsed" and "search" snaps.
+- Merge offer: added mergeDismissed flag to store. Both accept AND reject call dismissMerge() which sets mergeOffer=null + mergeDismissed=true. The timer effect checks `if (mergeDismissed) return` — never resurfaces. Verified: rejected merge, waited 35s (>32s trigger), did NOT reappear.
+- Mode toggle: rewrote with consistent green active state for BOTH modes (emerald-500 bg, emerald-950 text). Inactive mode is subtle ghost. Strict content gating in sheet-content (people→NPD/ReturnRides/PersonalDrivers/CommuteCommunities/CommuteCalendar; parcel→MerchantIntegrations/ParcelCourierOptimizer).
+- Commute Calendar (new component): riders + drivers add future commute obligations. Form with rider/driver toggle, title, origin, destination, time picker, recurring toggle, day-of-week picker (S M T W T F S). List shows existing commutes with time badge, route, days. AI matching count shown. Verified: added "School run" as driver → list shows 2 commutes, "AI matching you with 7 nearby commuters".
+- Agent Marketplace (new component): 9 first-party optimization agents (Savings, Pooling, Fastest, Safety, Calendar, Eco, Market, Night Rider, Rush Crusher) with ratings, subscribers, avg savings. Subscribe/unsubscribe (recruit multiple). Active subscriptions banner with agent avatars + count.
+- Extension Store (new component): 8 third-party developer extensions (Campus Pool, Fleet Connect, School Run, Eco Warrior, MediRide, CorpTravel, CourierPro, Festival Flow) with verified badges, version, developer, installs, ratings, install buttons. Submit-for-review form for developers.
+- Fleet Plugins (new component): 5 fleet operators (CityCab, GreenLine, ExpressCouriers, CorpFleet, TroTro Network) with connect/disconnect buttons, vehicle counts, utilization, zones, plugin names, joined-pool counts. Liquidity pool summary card.
+- Tab restructure: 6 tabs — Journey / Auction / Market / Agents / Network / Savings. Agents tab combines AgentMarketplace + ExtensionStore + FleetPlugins + MobilityTeam. Market tab (people) includes CommuteCalendar.
+- Store additions: mergeDismissed, commuteObligations, subscribedAgents, installedExtensions + setters.
+- Types: CommuteObligation, MarketAgent, AgentExtension. Mock-data: MARKET_AGENTS, AGENT_EXTENSIONS, FLEET_PLUGINS.
+
+Verification (Agent Browser + VLM):
+- Bottom sheet opaque ✅, autocomplete dropdown with suggestions ✅, merge permanent dismissal ✅, mode toggle green for both modes ✅, commute calendar with add form + driver toggle ✅, agent marketplace with 9 agents ✅, extension store with 8 extensions + install ✅, fleet plugins with 5 operators + liquidity pools ✅.
+- Lint clean, dev server healthy.
+- Committed + pushed to GitHub, deployed to Vercel (myoryx.vercel.app) — HTTP 200, /api/seed 200.
+
+Stage Summary:
+- All 8 UX issues fixed and 4 new features built. Deployed to https://myoryx.vercel.app (production verified).
