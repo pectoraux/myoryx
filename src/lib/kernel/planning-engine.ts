@@ -1,8 +1,9 @@
-// Oryx Mobility Kernel — Mobility Planning Engine
-// The calendar is no longer just a calendar. It is the Planning Engine.
-// Every calendar event becomes a Mobility Intent. The optimizer continuously
-// searches for cheaper departures, pools, return rides, subscriptions,
-// multimodal routes, and batching opportunities.
+// Oryx Mobility Kernel — Mobility Planning Engine (M4-M6)
+// The calendar is not a traditional calendar — it is the planning engine
+// for all mobility. Every event becomes a Mobility Intent that flows
+// through the event bus. The optimizer continuously computes real
+// suggestions (shifts, pools, return rides, multimodal, subscriptions,
+// batching, traffic avoidance) using actual demand curves + route costs.
 
 import type {
   CalendarEvent,
@@ -10,8 +11,15 @@ import type {
   IntentSuggestion,
   IntentType,
   MobilityIntent,
+  ScheduleConflict,
+  CostOverTime,
 } from "./types";
 import { commandBus, createCommand, eventBus, createEvent, generateId } from "./event-bus";
+import {
+  optimizeIntent as runOptimization,
+  predictCostOverTime,
+  detectConflicts,
+} from "./optimizer";
 
 class PlanningEngine {
   private events = new Map<string, CalendarEvent>();
@@ -64,6 +72,10 @@ class PlanningEngine {
       recurring: event.recurring
         ? { days: event.recurring.days, time: event.recurring.time }
         : undefined,
+      travelWindow: event.travelWindow,
+      planSpan: event.planSpan,
+      policy: event.policy,
+      dependencies: event.dependencies,
       priority: event.priority,
       status: "predicted",
       suggestions: [],
@@ -106,43 +118,13 @@ class PlanningEngine {
       .sort((a, b) => a.createdAt - b.createdAt);
   }
 
-  // --- Optimization ------------------------------------------------------
+  // --- Optimization (M6 — real algorithms, no hardcoded values) ---------
 
   optimizeIntent(intentId: string): IntentSuggestion[] {
     const intent = this.intents.get(intentId);
     if (!intent) return [];
-    const suggestions: IntentSuggestion[] = [];
-
-    // 1. Schedule shift suggestion (if predictable + flexible arrival)
-    if (intent.horizon === "predictable" && intent.arriveBy) {
-      const shift = this.findShiftOpportunity(intent);
-      if (shift) suggestions.push(shift);
-    }
-
-    // 2. Pool suggestion
-    const pool = this.findPoolOpportunity(intent);
-    if (pool) suggestions.push(pool);
-
-    // 3. Return ride suggestion
-    const ret = this.findReturnRideOpportunity(intent);
-    if (ret) suggestions.push(ret);
-
-    // 4. Multimodal suggestion
-    const mm = this.findMultimodalOpportunity(intent);
-    if (mm) suggestions.push(mm);
-
-    // 5. Subscription suggestion (for recurring)
-    if (intent.recurring) {
-      const sub = this.findSubscriptionOpportunity(intent);
-      if (sub) suggestions.push(sub);
-    }
-
-    // 6. Batch suggestion (for delivery intents)
-    if (intent.type === "delivery") {
-      const batch = this.findBatchOpportunity(intent);
-      if (batch) suggestions.push(batch);
-    }
-
+    // run the real optimizer (demand curves, route costs, pool matching)
+    const suggestions = runOptimization(intent);
     intent.suggestions = suggestions;
     intent.status = "optimizing";
     intent.updatedAt = Date.now();
@@ -152,77 +134,29 @@ class PlanningEngine {
     return suggestions;
   }
 
-  private findShiftOpportunity(intent: MobilityIntent): IntentSuggestion | null {
-    // simulate: shifting arrival by 30-60 min avoids surge
-    const saving = 8 + Math.floor(Math.random() * 18);
-    return {
-      id: generateId("sug"),
-      kind: "shift",
-      title: `Shift arrival by 45 minutes`,
-      detail: `Surge clears after the peak window. Arriving later avoids peak pricing.`,
-      saving,
-      confidence: 80 + Math.floor(Math.random() * 15),
-    };
+  // cost-over-time prediction for an intent's route
+  getCostOverTime(intentId: string): CostOverTime | undefined {
+    const intent = this.intents.get(intentId);
+    if (!intent) return undefined;
+    if (!intent.costOverTime) {
+      const baseHour = this.parseHour(intent.arriveBy || intent.recurring?.time || "08:00");
+      intent.costOverTime = predictCostOverTime(intent.origin, intent.destination, baseHour);
+    }
+    return intent.costOverTime;
   }
 
-  private findPoolOpportunity(intent: MobilityIntent): IntentSuggestion | null {
-    // simulate: 3 nearby riders heading same direction
-    const riders = 2 + Math.floor(Math.random() * 4);
-    const saving = 40 + Math.floor(Math.random() * 30);
-    return {
-      id: generateId("sug"),
-      kind: "pool",
-      title: `Pool with ${riders} nearby commuters`,
-      detail: `${riders} riders heading ${intent.origin} → ${intent.destination} around the same time.`,
-      saving,
-      confidence: 75 + Math.floor(Math.random() * 20),
-    };
+  private parseHour(time: string): number {
+    if (time.includes("T")) {
+      const d = new Date(time);
+      return d.getHours() + d.getMinutes() / 60;
+    }
+    const [h, m] = time.split(":").map(Number);
+    return (h || 0) + (m || 0) / 60;
   }
 
-  private findReturnRideOpportunity(intent: MobilityIntent): IntentSuggestion | null {
-    if (Math.random() > 0.6) return null;
-    return {
-      id: generateId("sug"),
-      kind: "return_ride",
-      title: `Return ride available`,
-      detail: `A driver returning from ${intent.destination} can take you back at −40%.`,
-      saving: 6 + Math.floor(Math.random() * 8),
-      confidence: 70 + Math.floor(Math.random() * 20),
-    };
-  }
-
-  private findMultimodalOpportunity(intent: MobilityIntent): IntentSuggestion | null {
-    return {
-      id: generateId("sug"),
-      kind: "multimodal",
-      title: `Multi-modal route`,
-      detail: `Walk + shuttle + ride saves vs single car. Lower CO₂ too.`,
-      saving: 9,
-      co2: 1.8,
-      confidence: 85,
-    };
-  }
-
-  private findSubscriptionOpportunity(intent: MobilityIntent): IntentSuggestion | null {
-    return {
-      id: generateId("sug"),
-      kind: "subscription",
-      title: `Subscribe to a personal driver`,
-      detail: `Recurring ${intent.type} trips qualify for weekly subscription at −35%.`,
-      saving: 22,
-      confidence: 88,
-    };
-  }
-
-  private findBatchOpportunity(intent: MobilityIntent): IntentSuggestion | null {
-    return {
-      id: generateId("sug"),
-      kind: "batch",
-      title: `Batch with 12 nearby parcels`,
-      detail: `12 parcels heading to the same area can share a courier.`,
-      saving: 18,
-      confidence: 82,
-    };
+  // conflict detection across a user's intents
+  detectScheduleConflicts(userId: string): ScheduleConflict[] {
+    return detectConflicts(this.getIntents(userId));
   }
 
   // continuous optimization loop — runs every 30s, re-optimizes all intents

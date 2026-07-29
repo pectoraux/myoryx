@@ -64,33 +64,118 @@ export interface MobilityIntent {
   // arrival/departure windows (flexible)
   arriveBy?: string; // ISO
   departAfter?: string; // ISO
+  // travel window (M4: flexible arrival/departure)
+  travelWindow?: TravelWindow;
   // recurrence (for predictable trips)
   recurring?: {
     days: number[]; // 0=Sun..6=Sat
     time: string; // "HH:MM"
     until?: string; // ISO date
   };
+  // plan span (M4: hourly/daily/weekly/monthly)
+  planSpan?: PlanSpan;
   // constraints & preferences
   modePreference?: string[];
   maxWalkM?: number;
   maxWaitMin?: number;
   priority: "low" | "normal" | "high" | "critical";
+  // travel policy (M4)
+  policy?: TravelPolicy;
+  // dependencies (M4)
+  dependencies?: IntentDependency[];
   // optimization state
   status: IntentStatus;
   // generated opportunities
   suggestions?: IntentSuggestion[];
+  // predicted cost curve (M6)
+  costOverTime?: CostOverTime;
+  // estimated baseline cost (computed)
+  estimatedCost?: number;
   createdAt: number;
   updatedAt: number;
 }
 
 export interface IntentSuggestion {
   id: string;
-  kind: "shift" | "pool" | "return_ride" | "multimodal" | "subscription" | "batch";
+  kind: "shift" | "pool" | "return_ride" | "multimodal" | "subscription" | "batch" | "traffic" | "calendar_adjust";
   title: string;
   detail: string;
   saving?: number;
   co2?: number;
   confidence: number;
+  // structured data for the UI to render + act on
+  data?: {
+    originalTime?: string;
+    suggestedTime?: string;
+    originalCost?: number;
+    suggestedCost?: number;
+    poolRiders?: number;
+    modes?: string[];
+    driverName?: string;
+    parcelsBatched?: number;
+    delayMin?: number;
+  };
+}
+
+// --- Planning engine extensions (M4-M6) ----------------------------------
+
+export type PlanSpan = "hourly" | "daily" | "weekly" | "monthly";
+
+export interface TravelWindow {
+  // flexible arrival: must arrive between earliest and latest
+  arriveEarliest?: string; // HH:MM
+  arriveLatest?: string; // HH:MM
+  // flexible departure: can leave between earliest and latest
+  departEarliest?: string;
+  departLatest?: string;
+  // flexibility radius in minutes
+  flexibilityMin: number;
+}
+
+export interface TravelPolicy {
+  // corporate or personal travel policy constraints
+  maxFarePerRide?: number;
+  maxFarePerWeek?: number;
+  allowedModes?: string[];
+  requireReceipt?: boolean;
+  requireApprovalAbove?: number;
+  preferredProviders?: string[];
+  prohibitedZones?: string[];
+}
+
+export interface IntentDependency {
+  // this intent depends on another completing first
+  dependsOnIntentId?: string;
+  // or depends on an external event
+  dependsOnEvent?: string;
+  // minimum gap in minutes between dependency completion and this intent
+  minGapMin?: number;
+}
+
+export interface ScheduleConflict {
+  id: string;
+  intentIds: string[];
+  type: "overlap" | "insufficient_gap" | "double_booking";
+  severity: "warning" | "error";
+  detail: string;
+  resolution?: string;
+}
+
+export interface CostPrediction {
+  // predicted transportation cost for a specific time slot
+  time: string; // HH:MM
+  cost: number;
+  surge: number; // multiplier
+  demand: "low" | "medium" | "high";
+  confidence: number;
+}
+
+export interface CostOverTime {
+  // cost curve for the intent's route over the next 24h
+  baseline: number;
+  predictions: CostPrediction[];
+  cheapestSlot?: { time: string; cost: number; saving: number };
+  peakSlot?: { time: string; cost: number };
 }
 
 // --- Calendar (Predictable + Short Notice) -------------------------------
@@ -106,13 +191,21 @@ export interface CalendarEvent {
   origin: string;
   destination: string;
   // timing
-  start: string; // ISO
+  start: string; // ISO or HH:MM
   end?: string; // ISO
   allDay?: boolean;
   recurring?: {
     days: number[];
     time: string;
   };
+  // plan span (M4)
+  planSpan?: PlanSpan;
+  // travel window (M4: flexible arrival/departure)
+  travelWindow?: TravelWindow;
+  // travel policy (M4)
+  policy?: TravelPolicy;
+  // dependencies (M4)
+  dependencies?: IntentDependency[];
   // metadata
   priority: MobilityIntent["priority"];
   constraints?: string[];
@@ -120,6 +213,8 @@ export interface CalendarEvent {
   // planning
   optimized: boolean;
   saving?: number;
+  // drag-and-drop position (for UI timeline)
+  lane?: number;
   createdAt: number;
 }
 

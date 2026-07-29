@@ -358,3 +358,43 @@ Verification (Vercel production):
 
 Stage Summary:
 - All 8 spec areas now fully implemented. The Mobility Kernel is production-grade: domain-driven, event-driven, CQRS, event sourcing, sagas, RBAC, multi-tenancy, audit, observability, background jobs, health monitoring, webhook/streaming connectors, 4 AI teams, full Knowledge Graph. Ready for M4+ optimization engines.
+
+---
+Task ID: 8-planner-ui
+Agent: planner-ui
+Task: Rewrite the Mobility Planning Engine calendar UI (`src/components/kernel/mobility-planning-engine.tsx`) as a production planner with 4 sub-views (Timeline / Day / Week / List), an event editor, a selected-event detail dialog with cost-over-time AreaChart, conflicts badge, and compact half-snap mode. Only this one file may be touched.
+
+Work Log:
+- Read worklog Tasks 6, 7 to understand the Mobility Kernel architecture (event-driven around mobility INTENTS; calendar → deriveIntent → optimizer; optimizer now uses real demand curves + haversine route distances + pool matching, no hardcoded values).
+- Read kernel `types.ts` (CalendarEvent, MobilityIntent, IntentSuggestion with 8 kinds, CostOverTime, ScheduleConflict), `planning-engine.ts` (deriveIntent / optimizeIntent / getCostOverTime / detectScheduleConflicts / continuous optimization loop every 30s), `optimizer.ts` (surge model, route cost, pool candidates, 7 suggestion generators, cost-over-time prediction), and the 3 kernel API routes (calendar GET/POST/DELETE, intents GET, cost GET, conflicts GET). Confirmed intent objects returned by `/api/kernel/intents` include `costOverTime`, `estimatedCost`, and `suggestions[]` (sorted by saving desc).
+- REWROTE `src/components/kernel/mobility-planning-engine.tsx` end-to-end (~2480 lines, all sub-components hoisted to module scope to satisfy `react-hooks/static-components`).
+
+Top bar: "Mobility Planning Engine" pill + title + subtitle; emerald "Add plan" button; optimization status banner (animated brain icon, "{X} intents being optimized · {Y} suggestions found", emerald "{Z} potential savings" chip, red "{N} conflicts" badge that expands into a conflict list with severity/type/detail/AI resolution).
+
+View toggle: Predictable Trips | Short Notice Trips — framer-motion `layoutId="mpe-view-active"` sliding emerald-ringed indicator.
+
+4 sub-views (tabs below the view toggle):
+1. Timeline (default): vertical timeline 05:00–23:00, hour gridlines, events as absolute-positioned cards with horizontal connector to time axis. Greedy `assignLanes` packing prevents overlap. Color-coded by priority (critical=rose, high=amber, normal=emerald, low=zinc) via left border + chip + dot. Recurring events show repeat icon. "NOW" emerald line with pulsing dot. Auto-scrolls to current time on mount. Cards show title, route, time, priority chip, est. cost, suggestion count. Out-of-window events clamp with "↤ out of view" tag. Scrollable (max-h-420px) with custom scrollbar.
+2. Day: 7-column strip Sun–Sat with sticky headers + per-day count. Each card shows time, route, priority chip, suggestion count. Horizontally scrollable on mobile.
+3. Week: 7-day × 18-hour compact grid. Sticky header. Scrolls both directions on mobile.
+4. List: legacy-style cards — time block, title + priority chip, route, recurring days, est. cost, intent type, suggestion count. Hover-reveal trash button.
+
+Event editor (inline expandable): Title / Origin / Destination / Time / recurring days (S M T W T F S toggle buttons, predictable only) / Priority segmented control (low/normal/high/critical) / Plan span (hourly/daily/weekly/monthly) / **Arrival flexibility slider 0–60 min** with live "±N min window" label and emerald-gradient track / Notes / Save+Cancel. POSTs full body (incl. planSpan, travelWindow.flexibilityMin, notes, policy.allowedModes) to `/api/kernel/calendar` on save.
+
+Selected-event detail dialog (flagship): modal overlay (bottom-sheet on mobile, centered on desktop) with sticky header (icon, title, priority chip, time, route, recurring days, intent type, remove + close buttons). 3-stat summary grid (Est. cost / Top saving / Status). **Cost-over-time AreaChart** (recharts): ResponsiveContainer + AreaChart + Area with emerald gradient fill, XAxis=24h HH:MM, YAxis=₵ cost (auto-domain with 10% padding), CartesianGrid (subtle), custom ChartTooltip (time, fare, surge ×, demand color-coded, confidence %), ReferenceLine at "NOW" (amber dashed, "NOW" label), ReferenceDot for cheapest slot (emerald, label below), ReferenceDot for peak slot (rose, label above). Legend below chart. "−{X}% if shifted" badge. Falls back to fetching `/api/kernel/cost?intentId=` if intent lacks costOverTime — uses a per-intentId cache `{intentId, data}` to avoid synchronous setState in effect (lint-clean). Optimization suggestions list: 2-column grid sorted by saving desc, each card has kind icon (8 kinds supported: shift/pool/return_ride/multimodal/subscription/batch/traffic/calendar_adjust — added TrafficCone + CalendarClock icons for the 2 new kinds), title, GH₵ saving, detail, label + confidence + CO₂ badge, and "Apply" button that toasts "Suggestion applied". "AI is still optimizing this intent…" empty state with pulsing cyan dot when no suggestions exist.
+
+Empty state: Calendar icon (emerald for predictable, amber for short_notice) + message + "Add your first trip" button.
+
+Compact mode (half-snap): title pill + total potential savings chip + compact view toggle (Predictable/Short) + inline editor + next-3-events list (each shows time, title, route, top suggestion with kind icon + saving, or "optimizing…" spinner) + dashed "Add plan" button. Tapping an event opens the same detail dialog.
+
+Technical: `"use client"`, useEffect+fetch+useState for data, 5s polling of intents + conflicts (continuous re-optimization), intent lookup by intentId with title fallback, framer-motion opacity+y staggered entrances + AnimatePresence on editor/dialog/sub-view transitions, recharts proper imports (ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ReferenceDot), dark-theme-native (bg-background/bg-card/border-border with ring-1 accents, opaque cards), lucide-react icons (24 imported), relative API paths only.
+
+Verification:
+- `cd /home/z/my-project && bun run lint` → exit 0, NO errors, NO warnings. (Initial run had 1 error + 1 warning: `react-hooks/set-state-in-effect` on `setExtra(null)` in CostChartCard effect + an unused `eslint-disable-next-line react-hooks/exhaustive-deps` line. Fixed by refactoring to a per-intentId cache so the mismatch case is filtered at read time and there is no synchronous setState in effect; removed the now-unnecessary disable comment.)
+- `tail -c 4000 dev.log` → `✓ Compiled in 4.2s`, `✓ Compiled in 229ms`, `GET / 200 in 340ms`. No compile errors. (Pre-existing "EADDRINUSE :::3000" is a duplicate-startup attempt by an external process — actual dev server is running fine.)
+- Confirmed live API responses: `/api/kernel/calendar?view=predictable` → 2 events with `intentId` links; `/api/kernel/intents?userId=demo` → intents with `suggestions[]` sorted by saving desc, `costOverTime` populated, `estimatedCost` set; `/api/kernel/conflicts?userId=demo` → 1 overlap conflict (Sunday church ↔ Airport trip, 87 min).
+- Did NOT run `bun run build` per instructions.
+- Did NOT touch any other file (backend, other components, store, types, etc.). Worklog entry recorded in `/agent-ctx/8-planner-ui-planner-ui.md`.
+
+Stage Summary:
+The Mobility Planning Engine is now a flagship production planner. The Calendar tab exposes a Timeline (with lane-packed event cards anchored to time, NOW line, auto-scroll), Day, Week, and List views. Tapping any event opens a detail dialog with the cost-over-time AreaChart (NOW line + cheapest/peak ReferenceDots + custom tooltip) and AI optimization suggestions (all 8 kinds, sorted by saving, with Apply buttons). Conflicts surface as an expandable red badge. Compact mode for the half-snap shows the next 3 events with their top suggestion and total potential savings. Lint clean. Dev server compiles cleanly. The M4–M6 planning engine is now fully visible to the user as a real planning tool.
