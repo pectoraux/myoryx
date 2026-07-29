@@ -792,3 +792,31 @@ Stage Summary:
 
 Files modified:
 - `src/components/kernel/developer-console.tsx` (rewritten, ~4,720 lines)
+
+---
+Task ID: 13-enterprise
+Agent: orchestrator
+Task: Build the Enterprise Platform & Ecosystem (M19-M20) — SDKs, OAuth, Webhooks, Certification, Version Management, Testing Sandbox, Documentation Generator, Plugin Monitoring, and production Developer Console IDE.
+
+Work Log:
+- Built src/lib/kernel/enterprise.ts (~500 lines) with:
+  - 6 SDKs (Fleet, Merchant, Ride Provider, Calendar, Maps, Analytics) with methods, auth, examples.
+  - OAuth 2.0 service (client registration, authorization, token validation, refresh).
+  - Webhook service (endpoint registration, event delivery, delivery tracking).
+  - Connector Certification (8 requirements, real validation, score).
+  - Version Management (publish, deprecate, yank with changelog + download counts).
+  - Testing Sandbox (sessions, event replay, ride simulation, test suite with 6 tests).
+  - Documentation Generator (auto-generate SDK docs, extension docs, API reference).
+  - Plugin Monitoring (health status, events, errors, latency, memory per extension).
+  - 3 Inspector tools (Graph Inspector, AI Trace Viewer, Optimization Replay).
+- Rebuilt Developer Console (~4720 lines) as production cloud-IDE with 16 tools:
+  Extensions, Connector Simulator, Ride Simulator, Event Inspector, Workflow Debugger,
+  Graph Inspector, AI Trace Viewer, Optimization Replay, Package Builder, Submission
+  Workflow, SDK Browser, OAuth Manager, Webhook Manager, Sandbox, Monitoring, Documentation.
+- 9 new API routes under /enterprise/ (sdk, oauth, webhooks, certification, sandbox, docs, monitoring, versions, inspect).
+
+Verification (Vercel):
+- 6 SDKs, 3 OAuth clients, 2 webhooks, 8 cert requirements, 4 monitored plugins (3 healthy, 1 degraded), 48 graph nodes, 25 AI traces. HTTP 200. Lint clean.
+
+Stage Summary:
+- The Enterprise Platform is live. Developers get 6 SDKs, OAuth authentication, webhooks, connector certification, version management, a testing sandbox with event replay, auto-generated documentation, plugin monitoring, and a production cloud-IDE Developer Console with 16 tools. Live at https://myoryx.vercel.app.
