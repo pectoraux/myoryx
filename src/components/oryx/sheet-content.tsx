@@ -3,12 +3,12 @@ import { useState, useMemo } from "react";
 import { useOryx } from "@/lib/store";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Search,
+  Layers,
   Gavel,
-  Compass,
-  Store,
-  Users,
-  Network,
-  Wallet,
+  Calendar,
+  Car,
+  Settings,
   Package,
   Truck,
   Clock,
@@ -25,31 +25,23 @@ import RouteAlternatives from "./route-alternatives";
 import { VehicleMarketplace } from "./vehicle-marketplace";
 import { CalendarIntelligence } from "./calendar-intelligence";
 import AuctionPanel from "./auction-panel";
-import { MobilityTeam } from "./mobility-team";
-import { IntelligenceNetwork } from "./intelligence-network";
-import { DriverIntelligence } from "./driver-intelligence";
 import { ContinuousOptimization } from "./continuous-optimization";
-import { SavingsPanel } from "./savings-panel";
 import { OptimizationProfiles } from "./optimization-profiles";
 import JourneyComposer from "./journey-composer";
 import NPDMarketplace from "./npd-marketplace";
-import ReturnRides from "./return-rides";
-import PersonalDrivers from "./personal-drivers";
 import CommuteCommunities from "./commute-communities";
-import AI2AIMarketplace from "./ai2ai-marketplace";
 import MerchantIntegrations from "./merchant-integrations";
-import PaySwapPanel from "./payswap-panel";
-import { CommuteCalendar } from "./commute-calendar";
-import { AgentMarketplace, ExtensionStore } from "./agent-marketplace";
-import { FleetPlugins } from "./fleet-plugins";
+import { MobilityPlanningEngine } from "@/components/kernel/mobility-planning-engine";
+import { PersonalDriversHub } from "@/components/kernel/personal-drivers-hub";
+import { SettingsHub } from "@/components/kernel/settings-hub";
 
 const FULL_TABS = [
-  { id: "journey", label: "Journey", icon: Compass },
+  { id: "search", label: "Search", icon: Search },
+  { id: "compare", label: "Compare", icon: Layers },
   { id: "auction", label: "Auction", icon: Gavel },
-  { id: "market", label: "Market", icon: Store },
-  { id: "agents", label: "Agents", icon: Users },
-  { id: "network", label: "Network", icon: Network },
-  { id: "savings", label: "Savings", icon: Wallet },
+  { id: "calendar", label: "Calendar", icon: Calendar },
+  { id: "drivers", label: "Drivers", icon: Car },
+  { id: "settings", label: "Settings", icon: Settings },
 ] as const;
 
 type TabId = (typeof FULL_TABS)[number]["id"];
@@ -122,16 +114,17 @@ function ParcelCourierOptimizer() {
 
 export default function SheetContent() {
   const { sheetSnap, activeView, destination, mode } = useOryx();
-  const [tab, setTab] = useState<TabId>("journey");
+  const [tab, setTab] = useState<TabId>("search");
   const [lastView, setLastView] = useState(activeView);
 
   // Adjust local tab when the store's activeView changes externally
-  // (e.g. startAuction flips activeView to "auction"). This is the
-  // React-recommended "adjust state during render" pattern — avoids the
-  // set-state-in-effect lint rule and cascading renders.
+  // (e.g. startAuction flips activeView to "auction"). React "adjust state
+  // during render" pattern — avoids the set-state-in-effect lint rule.
   if (activeView !== lastView) {
     setLastView(activeView);
     if (activeView === "auction") setTab("auction");
+    else if (activeView === "compare") setTab("compare");
+    else if (activeView === "search") setTab("search");
   }
 
   // Collapsed or search-focused — show destination search (autocomplete)
@@ -178,10 +171,8 @@ export default function SheetContent() {
         <CalendarIntelligence />
         <DestinationIntel />
 
-        {/* Commute calendar — for riders + drivers to log obligations */}
-        <div className="px-4">
-          <CommuteCalendar />
-        </div>
+        {/* Compact Mobility Planning Engine preview */}
+        <MobilityPlanningEngine compact />
 
         {/* Compact NPD + commute previews */}
         <NPDMarketplace />
@@ -196,9 +187,9 @@ export default function SheetContent() {
   // Full — tabbed experience
   return (
     <div>
-      {/* Tab bar */}
+      {/* Tab bar (scrollable on mobile — 6 tabs) */}
       <div
-        className="sticky top-0 z-10 flex items-center gap-0.5 border-b border-border/40 px-1.5 py-2"
+        className="scroll-thin sticky top-0 z-10 flex items-center gap-0.5 overflow-x-auto border-b border-border/40 px-1.5 py-2"
         style={{
           background: "oklch(0.14 0.008 200 / 0.98)",
           backdropFilter: "blur(20px) saturate(1.5)",
@@ -211,7 +202,7 @@ export default function SheetContent() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`relative flex flex-1 flex-col items-center gap-1 rounded-lg py-1.5 transition ${
+              className={`relative flex min-w-[64px] flex-1 flex-col items-center gap-1 rounded-lg py-1.5 transition ${
                 active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -239,10 +230,28 @@ export default function SheetContent() {
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.2 }}
         >
-          {tab === "journey" && (
+          {tab === "search" && (
+            <div className="px-4 pb-8 pt-3">
+              <DestinationSearch />
+            </div>
+          )}
+          {tab === "compare" && mode === "people" && (
             <div className="px-4 pb-8 pt-3">
               <OptimizationProfiles />
               <JourneyComposer />
+              <ProviderComparison />
+              <VehicleMarketplace />
+              <WaitOptimizer />
+              <CalendarIntelligence />
+              <DestinationIntel />
+              <PoolSuggestions />
+              <RouteAlternatives />
+            </div>
+          )}
+          {tab === "compare" && mode === "parcel" && (
+            <div className="px-4 pb-8 pt-3">
+              <MerchantIntegrations />
+              <ParcelCourierOptimizer />
             </div>
           )}
           {tab === "auction" && (
@@ -253,42 +262,15 @@ export default function SheetContent() {
               </div>
             </div>
           )}
-          {tab === "market" && mode === "people" && (
-            <div className="px-4 pb-8 pt-3">
-              <NPDMarketplace />
-              <ReturnRides />
-              <PersonalDrivers />
-              <CommuteCommunities />
-              <CommuteCalendar />
-            </div>
+          {tab === "calendar" && (
+            <MobilityPlanningEngine />
           )}
-          {tab === "market" && mode === "parcel" && (
-            <div className="px-4 pb-8 pt-3">
-              <MerchantIntegrations />
-              <ParcelCourierOptimizer />
-            </div>
+          {tab === "drivers" && (
+            <PersonalDriversHub />
           )}
-          {tab === "agents" && (
-            <div>
-              <AgentMarketplace />
-              <ExtensionStore />
-              <FleetPlugins />
-              <div className="px-4 pb-8">
-                <MobilityTeam />
-              </div>
-            </div>
+          {tab === "settings" && (
+            <SettingsHub />
           )}
-          {tab === "network" && (
-            <div>
-              <IntelligenceNetwork />
-              <div className="px-4 pb-8">
-                <DriverIntelligence />
-                <AI2AIMarketplace />
-                <PaySwapPanel />
-              </div>
-            </div>
-          )}
-          {tab === "savings" && <SavingsPanel />}
         </motion.div>
       </AnimatePresence>
     </div>

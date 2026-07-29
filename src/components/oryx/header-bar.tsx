@@ -1,11 +1,40 @@
 "use client";
+import { useEffect, useState } from "react";
 import { useOryx } from "@/lib/store";
-import { Wallet, ChevronDown } from "lucide-react";
+import { Wallet, ChevronDown, Cpu } from "lucide-react";
 import ModeToggle from "./mode-toggle";
 import UserSwitcher from "./user-switcher";
 
+interface GraphStats {
+  totalNodes: number;
+  byType: Record<string, number>;
+  totalEdges: number;
+}
+
 export default function HeaderBar() {
   const { savings, setSheetSnap } = useOryx();
+  const [graph, setGraph] = useState<GraphStats | null>(null);
+  const [connectorsLive, setConnectorsLive] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [g, c] = await Promise.all([
+          fetch("/api/kernel/graph", { cache: "no-store" }).then((r) => r.json()),
+          fetch("/api/kernel/connectors", { cache: "no-store" }).then((r) => r.json()),
+        ]);
+        if (cancelled) return;
+        setGraph(g);
+        setConnectorsLive((c as Array<{ status: string }>).filter((x) => x.status === "live").length);
+      } catch {
+        // ignore — keep pill hidden
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 z-30 p-3 sm:p-4">
@@ -29,7 +58,7 @@ export default function HeaderBar() {
           </div>
         </button>
 
-        {/* Center: marketplace live + mode toggle (desktop) */}
+        {/* Center: marketplace live + kernel pill + mode toggle (desktop) */}
         <div className="hidden flex-1 items-center justify-center gap-2 md:flex">
           <div className="glass flex items-center gap-2 rounded-full border border-border/60 px-3 py-1.5 shadow-lg shadow-black/30">
             <span className="relative flex h-2 w-2">
@@ -41,6 +70,28 @@ export default function HeaderBar() {
             </span>
             <span className="text-xs text-muted-foreground">· 1,284 providers bidding</span>
           </div>
+
+          {/* Kernel status pill */}
+          {graph && (
+            <div
+              className="glass flex items-center gap-1.5 rounded-full border border-cyan-500/30 px-2.5 py-1.5 shadow-lg shadow-black/30"
+              title={`Mobility Kernel · ${graph.totalNodes} graph nodes · ${graph.totalEdges} edges · ${connectorsLive} connectors live`}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400" />
+              </span>
+              <Cpu className="h-3 w-3 text-cyan-400" />
+              <span className="font-mono text-[11px] font-bold tabular-nums text-cyan-300">
+                {graph.totalNodes} nodes
+              </span>
+              <span className="text-[11px] text-muted-foreground">·</span>
+              <span className="font-mono text-[11px] font-bold tabular-nums text-cyan-300">
+                {connectorsLive} conn
+              </span>
+            </div>
+          )}
+
           <ModeToggle />
         </div>
 
