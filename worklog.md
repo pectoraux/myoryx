@@ -533,3 +533,35 @@ Verification:
 
 Stage Summary:
 The flagship "Autonomous AI Workforce" Team tab is now a real-time observability surface for Oryx's multi-agent runtime. The team overview banner shows the 4 teams with live agent counts + savings + learned totals. The agent grid renders 25 agent cards with pulsing status dots, sparklines of the last 7 days of savings, full metric rows, and active toggles — all sortable and filterable by team. Clicking any card opens a slide-over Detail Panel with 4 explainability sub-tabs: a live Reasoning timeline that renders every decision's reasoning steps as a terminal/code trace (numbered, monospace, with confidence + triggered-by), a Current Tasks view with expandable input/output JSON, a Learned Optimizations view with the full optimization recipe pretty-printed, and a Configuration view with aggressiveness/risk sliders, learning/active toggles, permission-override chips, and a Delegate-task modal. The Cooperation feed streams agent-to-agent negotiations, delegations, and info shares with a "Start negotiation" form. Compact mode for the half-snap shows the top-4 agents + live cooperation feed and still opens the full Detail Panel. Lint clean, TypeScript clean, dev server healthy.
+
+---
+Task ID: 9-ai-teams
+Agent: orchestrator
+Task: Build Personal AI Teams (M7-M9) — true multi-agent runtime with cooperation, negotiation, learning, explainability, and the Team tab UI.
+
+Work Log:
+- Rewrote src/lib/kernel/ai-runtime.ts as a true multi-agent runtime:
+  - Task queue: agents enqueue + process tasks with real per-type execution logic (optimize_intent, negotiate_bid, find_pool, predict_demand, build_schedule). Each produces reasoning steps + savings + confidence.
+  - Agent-to-agent negotiation: buyer/seller agents negotiate through multiple rounds (offer/counter/accept), settling at midpoint. Metrics track wins/losses + savings.
+  - Cooperation: agents delegate tasks, share information, record cooperations (shared_plan/delegated_task/negotiation/info_share).
+  - Learning: agents record LearnedOptimizations from task outcomes (pattern, insight, confidence, applied count). Learning compounds.
+  - Metrics: tasksCompleted/Failed, negotiationsWon/Lost, totalSavingsGenerated, avgConfidence, avgTaskDurationMs, 7-day dailyStats.
+  - Configuration: aggressiveness, riskTolerance, learningEnabled, permission overrides — all user-configurable.
+  - Memory persistence: facts, decisions, tasks, learned optimizations, metrics.
+  - Explainability: every decision has reasoningSteps[] (terminal trace), triggeredBy, confidence.
+  - Event-driven: agents subscribe to kernel events, auto-enqueue tasks.
+- New types: AgentTask, AgentNegotiation, AgentNegotiationRound, LearnedOptimization, AgentMetrics, AgentCooperation, AgentConfig, AgentStatus. Extended AgentDecision + AgentMemory.
+- New API routes: /negotiations, /cooperations, /ai-stats. Enhanced /agents with full memory + config + task enqueue + negotiation + delegation.
+- Team UI (src/components/kernel/mobility-team.tsx, ~2660 lines): 4 team columns, runtime stats strip, agent grid with status indicators + sparklines + toggles, agent detail panel with 4 tabs (Reasoning/Tasks/Learned/Config), cooperation feed with negotiation starter.
+- Wired MobilityTeam into Settings hub Agents section.
+
+Verification (Agent Browser + VLM + Vercel):
+- 4 team columns: Rider (9 agents, 3 active, 7 learned, $22 savings), Driver (9), Fleet (4), Merchant (3).
+- Agent grid: individual cards with status (ACTIVE/IDLE), metrics (tasks/savings/conf/W-L), toggle switches.
+- Agent detail panel: Reasoning tab shows live step-by-step reasoning traces (terminal style: "01 │ Checking memory... 02 │ Found 2 similar past tasks 03 │ Computed optimization: save $18.69 with 80% confidence"), confidence badges, triggered-by events.
+- 4 sub-tabs: Reasoning (3 decisions), Tasks (3), Learned (3), Config.
+- Savings Agent: 3 tasks, 3 learned optimizations, $84.43 savings, 80% avg confidence, 99 facts in memory.
+- Vercel: HTTP 200, 25 agents live, Savings Agent with 3 tasks + 3 learned. Lint clean.
+
+Stage Summary:
+- The Autonomous AI Workforce is live. 25 agents across 4 teams cooperate, negotiate, learn, and persist memory. The Team tab exposes live reasoning, current tasks, learned optimizations, and full explainability. Live at https://myoryx.vercel.app.
