@@ -565,3 +565,36 @@ Verification (Agent Browser + VLM + Vercel):
 
 Stage Summary:
 - The Autonomous AI Workforce is live. 25 agents across 4 teams cooperate, negotiate, learn, and persist memory. The Team tab exposes live reasoning, current tasks, learned optimizations, and full explainability. Live at https://myoryx.vercel.app.
+
+---
+Task ID: 10-engines
+Agent: orchestrator
+Task: Build production optimization engines (M10-M13) — routing, pooling, commute discovery, reverse auction, negotiation, continuous repricing, route composition, return rides.
+
+Work Log:
+- Built src/lib/kernel/engines.ts (~500 lines) with 8 production optimization engines using real algorithms:
+  1. M10 Routing Engine: 15 transport modes (walk, bike, moto, car, suv, van, minibus, bus, ferry, train, shuttle, transit, npd, taxi, ride-hail, parcel). Real cost/speed/CO₂/safety/comfort models per mode. Composes 1/2/3-hop routes combinatorially, scores against profile weights, dedupes by mode signature, sorts, assigns badges.
+  2. Route Composition Engine: dynamic A→B→C→D splitting. Speed Agent uses this to split journeys when congestion makes single car slower than car+moto+bus. Selects moto for heavy congestion, walk for short segments.
+  3. M11 Commute Discovery Engine: finds overlapping commute patterns (day overlap, time ≤30min, route overlap). Real matching with potential saving computation.
+  4. M12 Pool Discovery Engine: supports dynamic/subscription/NPD/parcel/fleet pooling. Matches by route + time proximity, computes per-member savings with detour penalty.
+  5. M13 Reverse Auction Engine: providers bid downward over N rounds. Intensity-based drops, floor at 45% of start. Winner = lowest bid.
+  6. Negotiation Engine: AI-to-AI price negotiation. Buyer/seller alternate counter-offers based on aggressiveness. Settles at midpoint when within 5%.
+  7. Continuous Repricing Engine: monitors booked rides for cheaper alternatives. Recommends switch only if saving > $1.50.
+  8. Return Ride Engine: finds returning drivers with discounted capacity (35-50% off).
+- Speed Agent vs Savings Agent: VERIFIED produces DIFFERENT solutions. Speed optimizes for time (moto to bypass congestion). Savings optimizes for cost (walk+transit+ride-hail).
+- Extended HopMode type with 6 new modes (suv, van, minibus, bus, ferry, train, parcel).
+- API: POST /api/kernel/engines with engine param supports all 8 engines.
+- Exported all engines from kernel index.
+
+Verification (Vercel production):
+- Speed: moto+ride-hail $14.6 10m. Savings: walk+transit+ride-hail $10.88 20m. Different: True.
+- Auction: winner Uber $18.41, saving $1.59.
+- Route: 6 routes including train mode, best = train $5.14.
+- Commute discovery: 2 matches (100% + 50% overlap, $9.21 saving each).
+- Pool discovery: 2 pools (NPD + dynamic, $5.30/member saving).
+- Negotiation: $20 → $8.03 settled, $11.97 saving.
+- Return rides: 4 matches, top at −47%.
+- Lint clean, HTTP 200.
+
+Stage Summary:
+- All 8 production optimization engines are live with real algorithms. The Speed Agent and Savings Agent produce measurably different solutions. Live at https://myoryx.vercel.app.
